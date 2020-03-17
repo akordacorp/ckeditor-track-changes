@@ -1,25 +1,147 @@
 {
   "name": "lite",
   "version": "1.2.27",
-  "description": "LITE track changes for CKEditor",
+  "description": "Akorda LITE track changes for CKEditor",
   "main": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "ckeditor/**/*",
+    "index.js",
+    "index.d.ts"
+  ],
   "directories": {
     "doc": "docs",
     "test": "test"
   },
   "scripts": {
+    "build": "node scripts/build.js",
+    "start": "node scripts/start.js",
+    "plugins": "node scripts/build_plugins.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/loopindex/ckeditor-track-changes"
+    "url": "https://github.com/akordacorp/ckeditor-track-changes"
   },
-  "author": " (David *)Frenkiel",
+  "author": " (David *)Frenkiel, Matt Meiske",
   "bugs": {
-    "url": "https://github.com/loopindex/ckeditor-track-changes/issues"
+    "url": "https://github.com/akordacorp/ckeditor-track-changes/issues"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged"
+    }
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   },
   "dependencies": {
-    "webpack": "^2",
-    "webpack-uglify-js-plugin": "^1.1"
+    "nytimes-ice": "^0.6.3",
+    "opentip": "2.4.3",
+    "rangy": "^1.3.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.6.2",
+    "@babel/preset-env": "^7.6.2",
+    "@babel/preset-react": "^7.0.0",
+    "@babel/preset-typescript": "^7.6.0",
+    "@svgr/webpack": "4.3.2",
+    "@testing-library/react": "^9.1.4",
+    "@types/jest": "24.0.18",
+    "@types/jquery": "^3.3.33",
+    "@types/lodash": "^4.14.149",
+    "@types/node": "12.7.8",
+    "@types/react": "16.9.3",
+    "@types/react-dom": "16.9.1",
+    "@typescript-eslint/eslint-plugin": "^2.2.0",
+    "@typescript-eslint/parser": "^2.2.0",
+    "babel-eslint": "10.0.3",
+    "babel-jest": "^24.9.0",
+    "babel-loader": "^8.0.6",
+    "babel-plugin-named-asset-import": "^0.3.4",
+    "babel-preset-react-app": "^9.0.2",
+    "camelcase": "^5.2.0",
+    "case-sensitive-paths-webpack-plugin": "2.2.0",
+    "ckeditor4": "^4.13.1",
+    "ckeditor4-react": "1.0.1",
+    "copy-webpack-plugin": "^5.0.4",
+    "css-loader": "^3.2.0",
+    "dotenv": "6.2.0",
+    "dotenv-expand": "5.1.0",
+    "eslint": "^6.1.0",
+    "eslint-config-react-app": "^5.0.2",
+    "eslint-loader": "3.0.0",
+    "eslint-plugin-flowtype": "3.13.0",
+    "eslint-plugin-import": "2.18.2",
+    "eslint-plugin-jsx-a11y": "6.2.3",
+    "eslint-plugin-react": "7.14.3",
+    "eslint-plugin-react-hooks": "^1.6.1",
+    "file-loader": "^4.2.0",
+    "find": "^0.3.0",
+    "fs-extra": "7.0.1",
+    "html-differ": "^1.4.0",
+    "html-webpack-plugin": "4.0.0-beta.5",
+    "husky": "^3.0.5",
+    "identity-obj-proxy": "3.0.0",
+    "is-wsl": "^1.1.0",
+    "jasmine-core": "^3.5.0",
+    "jest": "24.9.0",
+    "jest-environment-jsdom-fourteen": "0.1.0",
+    "jest-resolve": "24.9.0",
+    "jest-watch-typeahead": "0.4.0",
+    "jquery": "^3.4.1",
+    "karma": "^4.3.0",
+    "karma-chrome-launcher": "^3.1.0",
+    "karma-jasmine": "^2.0.1",
+    "karma-jasmine-diff-reporter": "^2.0.0",
+    "karma-jasmine-html-reporter": "^1.4.2",
+    "karma-webpack": "^4.0.2",
+    "lodash": "^4.17.15",
+    "mini-css-extract-plugin": "0.8.0",
+    "optimize-css-assets-webpack-plugin": "5.0.3",
+    "pnp-webpack-plugin": "1.5.0",
+    "postcss-flexbugs-fixes": "4.1.0",
+    "postcss-loader": "3.0.0",
+    "postcss-normalize": "7.0.1",
+    "postcss-preset-env": "6.7.0",
+    "postcss-safe-parser": "4.0.1",
+    "prettier": "1.18.2",
+    "pretty-quick": "^1.11.1",
+    "raw-loader": "^3.1.0",
+    "react": "^16.9.0",
+    "react-app-polyfill": "^1.0.3",
+    "react-dev-utils": "^9.0.4",
+    "react-dom": "^16.9.0",
+    "resolve": "1.12.0",
+    "resolve-url-loader": "3.1.0",
+    "sass-loader": "7.2.0",
+    "semver": "6.3.0",
+    "style-loader": "^1.0.0",
+    "terser-webpack-plugin": "1.4.1",
+    "ts-loader": "^6.1.2",
+    "ts-pnp": "1.1.4",
+    "typescript": "3.6.3",
+    "url-loader": "2.1.0",
+    "webpack": "4.40.2",
+    "webpack-dev-server": "3.2.1",
+    "webpack-manifest-plugin": "2.0.4",
+    "workbox-webpack-plugin": "4.3.1"
+  },
+  "babel": {
+    "presets": [
+      "react-app"
+    ]
   }
 }
