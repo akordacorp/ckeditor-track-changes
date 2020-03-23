@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Akorda Lite",
+  "name": "Akorda Lite plugin for CKEditor",
   "icons": [
     {
       "src": "favicon.ico",

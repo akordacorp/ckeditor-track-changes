@@ -1,6 +1,11 @@
+# Akorda Updates
+This fork of LoopIndex's seeks to modernize some of the underlying code by converting to Typescript and adding a Create React App (CRA) test application (with additional CKEditor plugin webpack build code).
+
+The initial conversion to Typescript seeks only to have a working implementation. Little to no work has been done to type the underlying code properly.
+
 # Track Changes Plugin for CKEditor
 
-* Track changes plugin for CKEditor, based on <a href="https://github.com/NYTimes/ice" target="_blank">ICE</a> (NYTimes track changes for <code>contentEditable</code> documents). 
+* Track changes plugin for CKEditor, based on <a href="https://github.com/NYTimes/ice" target="_blank">ICE</a> (NYTimes track changes for <code>contentEditable</code> documents).
 
 ## Main Features
 
