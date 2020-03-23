@@ -1,0 +1,19 @@
+.App {
+  height: 100%;
+}
+
+.akorda-ui-editor > .cke_editable {
+  height: 100%;
+}
+
+.akorda-ui-editor > .cke_editable,
+.akorda-ui-editor > .cke {
+  margin: 5% 25%;
+  border: 1px solid lightgray;
+}
+
+.akorda-ui-editor,
+.akorda-ui-editor > .cke,
+.akorda-ui-editor > .cke > .cke_inner {
+  height: 300px !important;
+}
