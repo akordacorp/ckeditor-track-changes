@@ -1,4 +1,6 @@
 import ice from './ice';
+import dom from './dom';
+
 /*
 Copyright 2015 LoopIndex, This file is part of the Track Changes plugin for CKEditor.
 
@@ -146,7 +148,7 @@ function isLITENode(node: HTMLElement) {
 
 function cleanNode(node: any) {
   var ret, i, child;
-  if (node.nodeType === ice.dom.ELEMENT_NODE) {
+  if (node.nodeType === dom.ELEMENT_NODE) {
     var children = node.childNodes;
     for (i = 0; i < children.length; ++i) {
       child = children[i];
@@ -1826,6 +1828,7 @@ LITEPlugin.prototype = {
       time: any = new Date(change.time),
       lastTime: any = new Date(change.lastTime),
       lang: any = this._editor.lang.liter;
+
     title = title.replace(
       /%a/g,
       'insert' === change.type ? lang.CHANGE_TYPE_ADDED : lang.CHANGE_TYPE_DELETED
