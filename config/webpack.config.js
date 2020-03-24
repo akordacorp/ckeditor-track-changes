@@ -418,16 +418,27 @@ module.exports = function(webpackEnv) {
           },
         },
       ]) : null,
+      // Copy the package.json file to dist folder so we can package the module from there
+      new CopyWebpackPlugin([
+        {
+          from: {
+            glob: path.resolve(__dirname, '../package.json'),
+            dot: true,
+          },
+          to: '',
+        },
+      ]),
       // Copy additional CKEditor plugins and overrides from src
       new CopyWebpackPlugin([
         {
           from: {
-            glob: path.resolve(__dirname, '../src/plugins/**/*'),
+            glob: path.resolve(__dirname, '../src/plugins/lite/**/*'),
             dot: true,
           },
           to: '',
+          ignore: ['*.ts'],
           transformPath(targetPath, absolutePath) {
-            return targetPath.replace('src/plugins', isEnvDevelopment ? 'ckeditor/plugins' : 'plugins');
+            return targetPath.replace('src/plugins/lite', isEnvDevelopment ? 'ckeditor/plugins/liter' : 'liter');
           },
           force: true, // overwrite any existing files in the destination (e.g., so that contents.css replaces the one at dest)
         },

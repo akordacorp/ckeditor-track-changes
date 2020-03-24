@@ -1,4 +1,4 @@
-CKEDITOR.plugins.setLang('lite', 'pt-br', {
+CKEDITOR.plugins.setLang('liter', 'pt-br', {
 	TOGGLE_TRACKING: "Alternar marcas de revisão",
 	TOGGLE_SHOW: "Alternar marcas de revisão",
 	ACCEPT_ALL: "Aceitar todas as modificações",

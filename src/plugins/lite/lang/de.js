@@ -1,4 +1,4 @@
-﻿CKEDITOR.plugins.setLang( 'lite', 'de', {
+﻿CKEDITOR.plugins.setLang( 'liter', 'de', {
 	TOGGLE_TRACKING: "Überarbeitungsmodus umschalten",
 	TOGGLE_SHOW: "Überarbeitungsmodus umschalten",
 	ACCEPT_ALL: "Alle Änderungen annehmen",

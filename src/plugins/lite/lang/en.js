@@ -1,4 +1,4 @@
-CKEDITOR.plugins.setLang( 'lite', 'en', {
+CKEDITOR.plugins.setLang( 'liter', 'en', {
 	TOGGLE_TRACKING: "Toggle Tracking Changes",
 	TOGGLE_SHOW: "Toggle Tracking Changes",
 	ACCEPT_ALL: "Accept all changes",

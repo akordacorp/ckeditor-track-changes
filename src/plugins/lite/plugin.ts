@@ -439,7 +439,7 @@ function elementMatchesSelectors($el: any, patterns: any) {
  * the lifecycle of {@link LITE.LITEPlugin} the real plugin object.
  *
  */
-CKEDITOR.plugins.add('lite', {
+CKEDITOR.plugins.add('liter', {
   lang: ['en', 'de', 'fr', 'pt-br'],
   _scriptsLoaded: null, // not false, which means we're loading
 
@@ -574,7 +574,7 @@ LITEPlugin.prototype = {
    * @param {LITE.configuration} config a LITE configuration object, not null, ready to be used as a local copy
    */
   init: function(ed: any, config: any) {
-    var lang = ed.lang.lite;
+    var lang = ed.lang.liter;
     this._editor = ed;
     this._domLoaded = false;
     this._editor = null;
