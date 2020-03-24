@@ -2984,7 +2984,7 @@ class InlineChangeEditor {
       nodes.each(function(i, node) {
         var dataId = node.getAttribute(clsAttr),
           nodeData = saveMap[dataId];
-        if (dataId) {
+        if (dataId && nodeData) {
           delete saveMap[dataId];
           Object.keys(nodeData.attributes).forEach(function(key) {
             node.setAttribute(key, nodeData.attributes[key]);
