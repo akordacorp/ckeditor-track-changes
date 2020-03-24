@@ -7,7 +7,7 @@ const App: React.FC = () => {
     <div className="App">
       <CKEditor
         config={{
-          extraPlugins: 'lite',
+          extraPlugins: 'liter',
         }}
         data="<p>hello world</p>"
         onBeforeLoad={(CKEDITOR: any) => {
