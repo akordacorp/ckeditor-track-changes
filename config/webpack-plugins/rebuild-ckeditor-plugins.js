@@ -35,7 +35,7 @@ class BuildCKEditorPlugins {
       const rebuild = Object.keys(changedTimes).some(isNotCKEditorPluginJS);
 
       if (rebuild) {
-        buildPlugins().then(callback);
+        buildPlugins('development').then(callback);
       } else {
         callback();
       }

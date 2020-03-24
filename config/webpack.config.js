@@ -436,7 +436,7 @@ module.exports = function(webpackEnv) {
             dot: true,
           },
           to: '',
-          ignore: ['*.ts'],
+          ignore: isEnvProduction ? ['*.ts'] : [], // don't ignore typescript files during dev since it prevents auto reload
           transformPath(targetPath, absolutePath) {
             return targetPath.replace('src/plugins/lite', isEnvDevelopment ? 'ckeditor/plugins/liter' : 'liter');
           },
