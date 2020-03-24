@@ -10,7 +10,7 @@ const App: React.FC = () => {
           extraPlugins: 'liter',
           lite: {
             userId: 191,
-            name: 'Matt Meiske'
+            userName: 'Matt Meiske'
           }
         }}
         data="<p>hello world</p>"
