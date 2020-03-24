@@ -757,7 +757,7 @@ LITEPlugin.prototype = {
 
     var tracking = undefined === track ? !this._isTracking : track,
       e = this._editor,
-      lang = this._editor.lang.lite,
+      lang = this._editor.lang.liter,
       force = options && options.force;
     if (!tracking && this._isTracking && !force) {
       var nChanges = this._tracker.countChanges({ verify: true });
@@ -795,7 +795,7 @@ LITEPlugin.prototype = {
 
   toggleShow: function(show: any, bNotify: any) {
     var vis = typeof show === 'undefined' ? !this._isVisible : show,
-      lang = this._editor.lang.lite;
+      lang = this._editor.lang.liter;
     this._isVisible = vis;
     if (this._isTracking) {
       this._setCommandsState(
@@ -1825,7 +1825,7 @@ LITEPlugin.prototype = {
     var title = this._config.tooltipTemplate || defaultTooltipTemplate,
       time: any = new Date(change.time),
       lastTime: any = new Date(change.lastTime),
-      lang: any = this._editor.lang.lite;
+      lang: any = this._editor.lang.liter;
     title = title.replace(
       /%a/g,
       'insert' === change.type ? lang.CHANGE_TYPE_ADDED : lang.CHANGE_TYPE_DELETED
