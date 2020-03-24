@@ -153,6 +153,12 @@ dom.getElementDimensions = function(element: any) {
   };
 };
 
+dom.remove = function (element: any) {
+  if (element) {
+    return jQuery(element).remove();
+  }
+};
+
 dom.insertBefore = function(before: any, elem: any) {
   $(before).before(elem);
 };
