@@ -77,14 +77,13 @@ class InlineChangeEditor {
 
   // ice node attribute names:
   attributes: any = {
-    changeId: 'data-cid',
+    changeId: 'data-id',
     userId: 'data-userid',
     userName: 'data-username',
     sessionId: 'data-session-id',
     time: 'data-time',
     lastTime: 'data-last-change-time',
     changeData: 'data-changedata', // arbitrary data to associate with the node, e.g. version,
-    changeOwnId: "data-id" // TODO: re-evaluate this akorda attribute
   };
 
   classes: any = {
@@ -171,6 +170,7 @@ class InlineChangeEditor {
         if (!isNaN(st)) {
           this._userStyles[id] = this.stylePrefix + '-' + st;
           this._uniqueStyleIndex = Math.max(st, this._uniqueStyleIndex);
+          this._uniqueIDIndex = Math.max(st, this._uniqueIDIndex);
           this._styles[st] = true;
         }
       }
@@ -1244,9 +1244,6 @@ class InlineChangeEditor {
 
     if (!ctNode.getAttribute(this.attributes.changeId)) {
       attributes[this.attributes.changeId] = changeid;
-      if (!ctNode.getAttribute(this.attributes.changeOwnId)) {
-        attributes[this.attributes.changeOwnId] = `0${changeid}`;
-      }
     }
     // handle missing userid, try to set username according to userid
     var userId = ctNode.getAttribute(this.attributes.userId);
@@ -2734,6 +2731,7 @@ class InlineChangeEditor {
   _loadFromDom() {
     this._changes = {};
     this._uniqueStyleIndex = 0;
+    this._uniqueIDIndex = 1;
     var myUserId = this.currentUser && this.currentUser.id,
       myUserName = (this.currentUser && this.currentUser.name) || '',
       now = new Date().getTime(),
@@ -2785,11 +2783,6 @@ class InlineChangeEditor {
         changeid = this.getNewChangeId();
         // @ts-ignore
         el.setAttribute(this.attributes.changeId, changeid);
-        // @ts-ignore
-        if (!el.getAttribute(this.attributes.changeOwnId)) {
-          // @ts-ignore
-          el.setAttribute(this.attributes.changeOwnId, `0${changeid}`);
-        }
       }
       // @ts-ignore
       var timeStamp = parseInt(el.getAttribute(this.attributes.time) || '');

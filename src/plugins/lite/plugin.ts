@@ -113,14 +113,13 @@ const LITE = {
     deleteClass: 'ice-del',
     insertClass: 'ice-ins',
     attributes: {
-      changeId: 'data-cid',
+      changeId: 'data-id',
       userId: 'data-userid',
       userName: 'data-username',
       sessionId: 'data-session-id',
       changeData: 'data-changedata',
       time: 'data-time',
       lastTime: 'data-last-change-time',
-      changeOwnId: "data-id"
     },
     stylePrefix: 'ice-cts',
     preserveOnPaste: 'p',
