@@ -93,6 +93,8 @@ dom.TEXT_CONTAINER_ELEMENTS = [
   'h6',
   'ins',
   'del',
+  'u',
+  's'
 ];
 
 dom.STUB_ELEMENTS = dom.CONTENT_STUB_ELEMENTS.slice();
