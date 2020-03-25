@@ -485,7 +485,8 @@ class InlineChangeEditor {
       } else {
         this._cleanupSelection(range, false, true);
         // if we're inside a current insert range, let the editor take care of the deletion
-        if (this._isCurrentUserIceNode(this._getIceNode(range.startContainer, INSERT_TYPE))) {
+        // ignore if we are performing forward delete
+        if (!right && this._isCurrentUserIceNode(this._getIceNode(range.startContainer, INSERT_TYPE))) {
           return false;
         }
 
@@ -2366,10 +2367,9 @@ class InlineChangeEditor {
    * Returns true if the keypress event provided is either the backspace or delete keys,
    * or a combination of CTL + DEL
    */
-  _isDeleteKey(e: any) {
-    var key = e.keyCode ? e.keyCode : e.which;
+  _isDeleteKey(key: number, ctrlKey: boolean) {
     const isPrincipalDelete = [dom.DOM_VK_DELETE, 46].includes(key);
-    const isSecondaryDelete = e.ctrlKey && key === 68; // CTL + D
+    const isSecondaryDelete = ctrlKey && key === 68; // CTL + D
     return isPrincipalDelete || isSecondaryDelete;
   }
 
@@ -2377,10 +2377,10 @@ class InlineChangeEditor {
    * Returns true if the event should be cancelled
    */
   keyPress(e: any) {
-    var key = e.keyCode ? e.keyCode : e.which;
+    const key = e.keyCode ? e.keyCode : e.which;
     var c = null;
 
-    if (this._isDeleteKey(e)) {
+    if (this._isDeleteKey(key, e.ctrlKey)) {
       return this._handleDeleteKey(key);
     }
 
