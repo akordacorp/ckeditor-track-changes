@@ -2274,7 +2274,17 @@ class InlineChangeEditor {
 
   /**
    * @private
-   * Handles arrow, delete key events, and others.
+   * Handles delete key operations
+   */
+  _handleDeleteKey(key: any) {
+    // key 68 is the 'd' key; here we assume it was pressed with CTL
+    const isDeleteRight = [46, 68].includes(key);
+    return this._deleteContents(isDeleteRight);
+  }
+
+  /**
+   * @private
+   * Handles arrow key events, and others.
    * @param {Event} e Event object.
    * @return {void|boolean} Returns true if default event needs to be blocked.
    */
@@ -2284,15 +2294,6 @@ class InlineChangeEditor {
       self = this,
       range = self.getCurrentRange();
     switch (key) {
-      case dom.DOM_VK_DELETE:
-        preventDefault = this._deleteContents();
-        break;
-
-      case 46:
-        // Key 46 is the DELETE key.
-        preventDefault = this._deleteContents(true);
-        break;
-
       /* ***********************************************************************************/
       /* BEGIN: Handling of caret movements inside hidden .ins/.del elements on Firefox **/
       /*  *Fix for carets getting stuck in .del elements when track changes are hidden  **/
@@ -2358,15 +2359,31 @@ class InlineChangeEditor {
     if (this._handleSpecialKey(e)) {
       return false;
     }
-
     return this._handleAncillaryKey(e);
+  }
+
+  /**
+   * Returns true if the keypress event provided is either the backspace or delete keys,
+   * or a combination of CTL + DEL
+   */
+  _isDeleteKey(e: any) {
+    var key = e.keyCode ? e.keyCode : e.which;
+    const isPrincipalDelete = [dom.DOM_VK_DELETE, 46].includes(key);
+    const isSecondaryDelete = e.ctrlKey && key === 68; // CTL + D
+    return isPrincipalDelete || isSecondaryDelete;
   }
 
   /**
    * Returns true if the event should be cancelled
    */
   keyPress(e: any) {
+    var key = e.keyCode ? e.keyCode : e.which;
     var c = null;
+
+    if (this._isDeleteKey(e)) {
+      return this._handleDeleteKey(key);
+    }
+
     if (e.ctrlKey || e.metaKey) {
       return false;
     }
@@ -2378,8 +2395,6 @@ class InlineChangeEditor {
       range.moveToNextEl(br);
     }
 
-    //			if (c !== null) {
-    var key = e.keyCode ? e.keyCode : e.which;
     switch (key) {
       case 32: //ckeditor does funny stuff with spaces, so insert it ourselves
         return this.insert({ text: ' ' });
