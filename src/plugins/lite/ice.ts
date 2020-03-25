@@ -68,17 +68,12 @@ class InlineChangeEditor {
 
   // Prepended to `changeType.alias` for classname uniqueness, if needed
   attrValuePrefix: string = '';
-  // changeTypes: any;
-  // contentEditable: any;
-  // currentUser: any;
   element: any;
   env: any;
   hostMethods: any;
   isPlaceHoldingDeletes: boolean = false;
   $this: any;
   selection: any;
-  // stylePrefix: any;
-  // tooltips: any;
 
   // ice node attribute names:
   attributes: any = {
@@ -88,7 +83,8 @@ class InlineChangeEditor {
     sessionId: 'data-session-id',
     time: 'data-time',
     lastTime: 'data-last-change-time',
-    changeData: 'data-changedata', // arbitrary data to associate with the node, e.g. version
+    changeData: 'data-changedata', // arbitrary data to associate with the node, e.g. version,
+    changeOwnId: "data-id" // TODO: re-evaluate this akorda attribute
   };
 
   classes: any = {
@@ -1247,6 +1243,9 @@ class InlineChangeEditor {
 
     if (!ctNode.getAttribute(this.attributes.changeId)) {
       attributes[this.attributes.changeId] = changeid;
+      if (!ctNode.getAttribute(this.attributes.changeOwnId)) {
+        attributes[this.attributes.changeOwnId] = `0${changeid}`;
+      }
     }
     // handle missing userid, try to set username according to userid
     var userId = ctNode.getAttribute(this.attributes.userId);
@@ -2771,6 +2770,11 @@ class InlineChangeEditor {
         changeid = this.getNewChangeId();
         // @ts-ignore
         el.setAttribute(this.attributes.changeId, changeid);
+        // @ts-ignore
+        if (!el.getAttribute(this.attributes.changeOwnId)) {
+          // @ts-ignore
+          el.setAttribute(this.attributes.changeOwnId, `0${changeid}`);
+        }
       }
       // @ts-ignore
       var timeStamp = parseInt(el.getAttribute(this.attributes.time) || '');

@@ -120,6 +120,7 @@ const LITE = {
       changeData: 'data-changedata',
       time: 'data-time',
       lastTime: 'data-last-change-time',
+      changeOwnId: "data-id"
     },
     stylePrefix: 'ice-cts',
     preserveOnPaste: 'p',
