@@ -2,7 +2,7 @@ import rangy from 'rangy';
 import dom from './dom';
 import Selection from './selection';
 import Bookmark from './bookmark';
-import { isAkordaComment } from './akorda';
+import { isAkordaMarkerElement } from './akorda';
 
 const ice: any = {};
 
@@ -1524,7 +1524,7 @@ class InlineChangeEditor {
             this._addDeleteTracking(elem, addDeleteOptions);
             continue;
           }
-          if (dom.hasNoTextOrStubContent(elem) && !isAkordaComment(elem)) {
+          if (dom.hasNoTextOrStubContent(elem) && !isAkordaMarkerElement(elem)) {
             this._removeNode(elem);
             continue;
           }
