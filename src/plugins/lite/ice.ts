@@ -2,7 +2,7 @@ import rangy from 'rangy';
 import dom from './dom';
 import Selection from './selection';
 import Bookmark from './bookmark';
-import { isAkordaMarkerElement } from './akorda';
+import { isAkordaMarkerElement, isAkordaUnselectable } from './akorda';
 
 const ice: any = {};
 
@@ -1491,7 +1491,7 @@ class InlineChangeEditor {
     // elements length may change during the loop so don't optimize
     for (var i = 0; i < elements.length; i++) {
       var elem = elements[i];
-      if (!elem || !elem.parentNode) {
+      if (!elem || !elem.parentNode || isAkordaUnselectable(elem)) {
         // maybe removed as a side effect of removing other stuff
         continue;
       }
