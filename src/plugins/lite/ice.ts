@@ -2231,8 +2231,8 @@ class InlineChangeEditor {
         var bookmarkEnd: any = getBookmarkEnd(contentAddNode.parentNode);
         var commentStart: any = isParentAComment && getCommentStart(this.element, parent);
         var commentEnd: any = isParentAComment && getCommentEnd(this.element, parent);
-        var repositionCommentsTags: boolean = isParentAComment && !!bookmarkStart && (commentStart.offsetLeft >= bookmarkStart.offsetLeft ||
-          commentEnd.offsetLeft >= bookmarkEnd.offsetLeft
+        var repositionCommentsTags: boolean = isParentAComment && !!bookmarkStart && ((!!commentStart && commentStart.offsetLeft >= bookmarkStart.offsetLeft) ||
+          (!!commentEnd && commentEnd.offsetLeft >= bookmarkEnd.offsetLeft)
         );
 
         this._deleteEmptyNode(contentAddNode);

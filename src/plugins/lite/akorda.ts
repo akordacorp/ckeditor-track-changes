@@ -7,7 +7,9 @@ export const AKORDA_CLASS_NAMES = {
   MARKER_COMMENT: 'marker-comment',
   CONCEPT_START: 'lc-start',
   CONCEPT_END: 'lc-end',
-  UNSELECTABLE: 'unselectable'
+  UNSELECTABLE: 'unselectable',
+  ACCEPTED: 'accepted',
+  REMOVED: 'removed'
 }
 
 /**
@@ -63,10 +65,6 @@ export const isAkordaComment = (node: Node): boolean => {
   return hasClassFrom(node, [AKORDA_CLASS_NAMES.MARKER_COMMENT]);
 }
 
-// function isImageMarker(element) {
-//   return !!element && !!element.classList && element.classList.contains("marker-image");
-// }
-
 export const isAkordaCommentIcon = (node: Node): boolean => {
   return hasClassFrom(node, [AKORDA_CLASS_NAMES.MARKER_IMAGE]);
 }
@@ -83,9 +81,11 @@ export const isAkordaConceptMarker = (element: HTMLElement): boolean => {
 /**
  * Returns true if the provided element is a marker/boundary (start or end) element used to demarcate a range of content
  * @param element
+ * TODO: Determine if accepted/removed is really a marker/boundary element class name
  */
 export const isAkordaMarkerElement = (element: HTMLElement): boolean => {
-  return isAkordaCommentMarker(element) || isAkordaConceptMarker(element);
+  const { ACCEPTED, REMOVED } = AKORDA_CLASS_NAMES;
+  return isAkordaCommentMarker(element) || isAkordaConceptMarker(element) || hasClassFrom(element, [ACCEPTED, REMOVED]);
 }
 
 /**
