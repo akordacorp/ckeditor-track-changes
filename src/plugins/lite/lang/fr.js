@@ -1,4 +1,4 @@
-CKEDITOR.plugins.setLang( 'lite', 'fr', {
+CKEDITOR.plugins.setLang( 'liter', 'fr', {
 	TOGGLE_TRACKING: "Activer/désactiver le suivi des modifications",
 	TOGGLE_SHOW: "Activer/désactiver le suivi des modifications",
 	ACCEPT_ALL: "Accepter toutes les modifications",

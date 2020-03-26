@@ -2,6 +2,7 @@ import rangy from 'rangy';
 import dom from './dom';
 import Selection from './selection';
 import Bookmark from './bookmark';
+import { isAkordaMarkerElement, isAkordaUnselectable, isAkordaComment, isFirstElementAComment, copyCommentData, isAkordaCommentStartMarker, isAkordaCommentEndMarker, insertCommentStartBefore, insertCommentEndAfter, isBookmarkStart, getBookmarkStart, getBookmarkEnd, getCommentStart, getCommentEnd } from './akorda';
 
 const ice: any = {};
 
@@ -67,27 +68,22 @@ class InlineChangeEditor {
 
   // Prepended to `changeType.alias` for classname uniqueness, if needed
   attrValuePrefix: string = '';
-  // changeTypes: any;
-  // contentEditable: any;
-  // currentUser: any;
   element: any;
   env: any;
   hostMethods: any;
   isPlaceHoldingDeletes: boolean = false;
   $this: any;
   selection: any;
-  // stylePrefix: any;
-  // tooltips: any;
 
   // ice node attribute names:
   attributes: any = {
-    changeId: 'data-cid',
+    changeId: 'data-id',
     userId: 'data-userid',
     userName: 'data-username',
     sessionId: 'data-session-id',
     time: 'data-time',
     lastTime: 'data-last-change-time',
-    changeData: 'data-changedata', // arbitrary data to associate with the node, e.g. version
+    changeData: 'data-changedata', // arbitrary data to associate with the node, e.g. version,
   };
 
   classes: any = {
@@ -174,6 +170,7 @@ class InlineChangeEditor {
         if (!isNaN(st)) {
           this._userStyles[id] = this.stylePrefix + '-' + st;
           this._uniqueStyleIndex = Math.max(st, this._uniqueStyleIndex);
+          this._uniqueIDIndex = Math.max(st, this._uniqueIDIndex);
           this._styles[st] = true;
         }
       }
@@ -488,7 +485,8 @@ class InlineChangeEditor {
       } else {
         this._cleanupSelection(range, false, true);
         // if we're inside a current insert range, let the editor take care of the deletion
-        if (this._isCurrentUserIceNode(this._getIceNode(range.startContainer, INSERT_TYPE))) {
+        // ignore if we are performing forward delete
+        if (!right && this._isCurrentUserIceNode(this._getIceNode(range.startContainer, INSERT_TYPE))) {
           return false;
         }
 
@@ -1167,7 +1165,7 @@ class InlineChangeEditor {
    */
 
   _getIceNodeClass(changeType: any) {
-    return this.attrValuePrefix + this.changeTypes[changeType].alias;
+    return `${this.attrValuePrefix}${this.changeTypes[changeType].alias}`;
   }
 
   /**
@@ -1491,7 +1489,7 @@ class InlineChangeEditor {
     // elements length may change during the loop so don't optimize
     for (var i = 0; i < elements.length; i++) {
       var elem = elements[i];
-      if (!elem || !elem.parentNode) {
+      if (!elem || !elem.parentNode || isAkordaUnselectable(elem)) {
         // maybe removed as a side effect of removing other stuff
         continue;
       }
@@ -1524,7 +1522,7 @@ class InlineChangeEditor {
             this._addDeleteTracking(elem, addDeleteOptions);
             continue;
           }
-          if (dom.hasNoTextOrStubContent(elem)) {
+          if (dom.hasNoTextOrStubContent(elem) && !isAkordaMarkerElement(elem)) {
             this._removeNode(elem);
             continue;
           }
@@ -1971,15 +1969,17 @@ class InlineChangeEditor {
     var moveLeft = options && options.moveLeft,
       contentAddNode = this._getIceNode(contentNode, INSERT_TYPE),
       ctNode,
-      range;
+      range,
+      contentDeleteNode = this._getIceNode(contentNode, DELETE_TYPE);
+
     options = options || {};
 
-    if (contentAddNode) {
+    if (contentAddNode && !contentDeleteNode) {
       return this._addDeletionInInsertNode(contentNode, contentAddNode, options);
     }
 
     range = options.range;
-    if (range && this._getIceNode(contentNode, DELETE_TYPE)) {
+    if (range && contentDeleteNode) {
       return this._deleteInDeleted(contentNode, options);
     }
     // Webkit likes to insert empty text nodes next to elements. We remove them here.
@@ -2181,30 +2181,93 @@ class InlineChangeEditor {
         parent = contentNode.parentNode,
         nChildren = parent.childNodes.length,
         ctNode;
-      parent.removeChild(contentNode);
-      ctNode = this._createIceNode(DELETE_TYPE);
-      if (options.deleteNodesCollection) {
-        options.deleteNodesCollection.push(ctNode);
-      }
-      ctNode.appendChild(contentNode);
-      if (cInd > 0 && cInd >= nChildren - 1) {
-        dom.insertAfter(contentAddNode, ctNode);
-      } else {
-        if (cInd > 0) {
-          var splitNode = this._splitNode(contentAddNode, parent, cInd);
-          this._deleteEmptyNode(splitNode);
+      if (!isAkordaMarkerElement(contentNode)) {
+        parent.removeChild(contentNode);
+        ctNode = this._createIceNode(DELETE_TYPE);
+        if (options.deleteNodesCollection) {
+          options.deleteNodesCollection.push(ctNode);
         }
-        contentAddNode.parentNode.insertBefore(ctNode, contentAddNode);
-      }
-      this._deleteEmptyNode(contentAddNode);
+        ctNode.appendChild(contentNode);
 
-      if (range && moveLeft) {
-        range.setStartBefore(ctNode);
-        range.collapse(true);
-        this.selection.addRange(range);
-      }
-      if (options && options.merge) {
-        this._mergeDeleteNode(ctNode);
+        // Check if it is a comment marker element
+        const isParentAComment = isAkordaComment(parent);
+        // Check if it is deleting the first character from the comment
+        const isDeletingCommentBeginning = (cInd === 0 && isParentAComment);
+        // Check if it is deleting the last character from the comment
+        const isDeletingCommentEnding = (cInd >= nChildren - 1 && isParentAComment);
+
+        if ((cInd > 0 && cInd >= nChildren - 1) || isDeletingCommentBeginning || isDeletingCommentEnding) {
+          if (!isDeletingCommentBeginning && !isDeletingCommentEnding) {
+            // Default behavior
+            dom.insertAfter(contentAddNode, ctNode);
+          } else {
+            if (isParentAComment) {
+              // Copy comment attributes to new 'del' element
+              copyCommentData(parent, ctNode);
+            }
+            // Condition to be sure is what we want
+            if (contentAddNode.contains(parent)) {
+              if (isDeletingCommentBeginning) {
+                // Insert the new 'del' element at the beginning
+                dom.insertBefore(parent, ctNode);
+              } else {
+                // Insert the new 'del' element at the end
+                dom.insertAfter(parent, ctNode);
+              }
+            } else {
+              // Default behavior
+              dom.insertAfter(contentAddNode, ctNode);
+            }
+          }
+        } else {
+          if (cInd > 0) {
+            var splitNode = this._splitNode(contentAddNode, parent, cInd);
+            this._deleteEmptyNode(splitNode);
+          }
+          contentAddNode.parentNode.insertBefore(ctNode, contentAddNode);
+        }
+
+        var bookmarkStart: any = getBookmarkStart(contentAddNode.parentNode);
+        var bookmarkEnd: any = getBookmarkEnd(contentAddNode.parentNode);
+        var commentStart: any = isParentAComment && getCommentStart(this.element, parent);
+        var commentEnd: any = isParentAComment && getCommentEnd(this.element, parent);
+        var repositionCommentsTags: boolean = isParentAComment && !!bookmarkStart && ((!!commentStart && commentStart.offsetLeft >= bookmarkStart.offsetLeft) ||
+          (!!commentEnd && commentEnd.offsetLeft >= bookmarkEnd.offsetLeft)
+        );
+
+        this._deleteEmptyNode(contentAddNode);
+        if (range && moveLeft) {
+          range.setStartBefore(ctNode);
+          range.collapse(true);
+          this.selection.addRange(range);
+        }
+        if (repositionCommentsTags) {
+          if (isParentAComment && (
+              isAkordaComment(ctNode.nextElementSibling) || isFirstElementAComment(ctNode.nextElementSibling)
+              )
+            ) {
+            copyCommentData(parent, ctNode);
+          }
+          var nextElementSibling = ctNode.nextElementSibling;
+          if (!!nextElementSibling && isAkordaCommentStartMarker(nextElementSibling.children[1])) {
+            insertCommentStartBefore(nextElementSibling.children[1], ctNode);
+          } else if (!!nextElementSibling && isAkordaCommentStartMarker(nextElementSibling.children[0])) {
+            insertCommentStartBefore(nextElementSibling.children[0], ctNode);
+          } else {
+            let previousSibling = ctNode.previousElementSibling;
+            if (!!previousSibling && !!previousSibling.firstChild && isAkordaCommentStartMarker(previousSibling.firstChild) &&
+              (isBookmarkStart(previousSibling.firstChild.nextElementSibling) || (isBookmarkStart(previousSibling.firstChild.nextElementSibling.firstChild)))) {
+                insertCommentStartBefore(previousSibling.firstChild, ctNode);
+            }
+          }
+          var previousSibling = ctNode.previousElementSibling;
+          if (!!previousSibling && isAkordaCommentEndMarker(previousSibling.lastChild)) {
+            insertCommentEndAfter(previousSibling.lastChild, ctNode);
+          }
+        }
+        if (options && options.merge) {
+          this._mergeDeleteNode(ctNode);
+        }
       }
       if (range) {
         range.refresh();
@@ -2274,7 +2337,17 @@ class InlineChangeEditor {
 
   /**
    * @private
-   * Handles arrow, delete key events, and others.
+   * Handles delete key operations
+   */
+  _handleDeleteKey(key: any) {
+    // key 68 is the 'd' key; here we assume it was pressed with CTL
+    const isDeleteRight = [46, 68].includes(key);
+    return this._deleteContents(isDeleteRight);
+  }
+
+  /**
+   * @private
+   * Handles arrow key events, and others.
    * @param {Event} e Event object.
    * @return {void|boolean} Returns true if default event needs to be blocked.
    */
@@ -2284,15 +2357,6 @@ class InlineChangeEditor {
       self = this,
       range = self.getCurrentRange();
     switch (key) {
-      case dom.DOM_VK_DELETE:
-        preventDefault = this._deleteContents();
-        break;
-
-      case 46:
-        // Key 46 is the DELETE key.
-        preventDefault = this._deleteContents(true);
-        break;
-
       /* ***********************************************************************************/
       /* BEGIN: Handling of caret movements inside hidden .ins/.del elements on Firefox **/
       /*  *Fix for carets getting stuck in .del elements when track changes are hidden  **/
@@ -2358,15 +2422,30 @@ class InlineChangeEditor {
     if (this._handleSpecialKey(e)) {
       return false;
     }
-
     return this._handleAncillaryKey(e);
+  }
+
+  /**
+   * Returns true if the keypress event provided is either the backspace or delete keys,
+   * or a combination of CTL + DEL
+   */
+  _isDeleteKey(key: number, ctrlKey: boolean) {
+    const isPrincipalDelete = [dom.DOM_VK_DELETE, 46].includes(key);
+    const isSecondaryDelete = ctrlKey && key === 68; // CTL + D
+    return isPrincipalDelete || isSecondaryDelete;
   }
 
   /**
    * Returns true if the event should be cancelled
    */
   keyPress(e: any) {
+    const key = e.keyCode ? e.keyCode : e.which;
     var c = null;
+
+    if (this._isDeleteKey(key, e.ctrlKey)) {
+      return this._handleDeleteKey(key);
+    }
+
     if (e.ctrlKey || e.metaKey) {
       return false;
     }
@@ -2378,8 +2457,6 @@ class InlineChangeEditor {
       range.moveToNextEl(br);
     }
 
-    //			if (c !== null) {
-    var key = e.keyCode ? e.keyCode : e.which;
     switch (key) {
       case 32: //ckeditor does funny stuff with spaces, so insert it ourselves
         return this.insert({ text: ' ' });
@@ -2719,6 +2796,7 @@ class InlineChangeEditor {
   _loadFromDom() {
     this._changes = {};
     this._uniqueStyleIndex = 0;
+    this._uniqueIDIndex = 1;
     var myUserId = this.currentUser && this.currentUser.id,
       myUserName = (this.currentUser && this.currentUser.name) || '',
       now = new Date().getTime(),
@@ -2984,7 +3062,7 @@ class InlineChangeEditor {
       nodes.each(function(i, node) {
         var dataId = node.getAttribute(clsAttr),
           nodeData = saveMap[dataId];
-        if (dataId) {
+        if (dataId && nodeData) {
           delete saveMap[dataId];
           Object.keys(nodeData.attributes).forEach(function(key) {
             node.setAttribute(key, nodeData.attributes[key]);

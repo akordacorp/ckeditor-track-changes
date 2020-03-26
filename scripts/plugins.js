@@ -61,10 +61,10 @@ function build(config) {
   });
 }
 
-module.exports = () => {
+module.exports = (mode = 'production') => {
   console.log(chalk.cyan('Building Typescript CKEditor Plugins...'));
   return new Promise(resolve => {
-    return createPluginConfigs()
+    return createPluginConfigs(mode)
       .then(configs => {
         return build(configs);
       })

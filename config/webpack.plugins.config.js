@@ -5,14 +5,14 @@ const chalk = require('react-dev-utils/chalk');
 
 const pluginConfigs = [];
 
-function createPluginConfig(pluginFile) {
+function createPluginConfig(pluginFile, mode = 'production') {
   return {
     entry: pluginFile,
     output: {
       path: pluginFile.replace('/plugin.ts', ''),
       filename: 'plugin.js',
     },
-    mode: 'production',
+    mode,
     resolve: {
       // support reading TypeScript and JavaScript files, 📖 -> https://github.com/TypeStrong/ts-loader
       extensions: ['.ts', '.js'],
@@ -54,13 +54,13 @@ function createPluginConfig(pluginFile) {
   };
 }
 
-module.exports = () => {
+module.exports = (mode = 'production') => {
   return new Promise(resolve => {
     // find all of the typescript CKEditor plugins and build them
     find.file(/plugin\.ts$/, paths.plugins, function(files) {
       files.forEach(file => {
         console.log(chalk.white.italic('Creating webpack config for building plugin:', file));
-        const config = createPluginConfig(file);
+        const config = createPluginConfig(file, mode);
         pluginConfigs.push(config);
       });
       resolve(pluginConfigs);

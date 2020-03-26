@@ -1,4 +1,6 @@
 import ice from './ice';
+import dom from './dom';
+
 /*
 Copyright 2015 LoopIndex, This file is part of the Track Changes plugin for CKEditor.
 
@@ -111,7 +113,7 @@ const LITE = {
     deleteClass: 'ice-del',
     insertClass: 'ice-ins',
     attributes: {
-      changeId: 'data-cid',
+      changeId: 'data-id',
       userId: 'data-userid',
       userName: 'data-username',
       sessionId: 'data-session-id',
@@ -146,7 +148,7 @@ function isLITENode(node: HTMLElement) {
 
 function cleanNode(node: any) {
   var ret, i, child;
-  if (node.nodeType === ice.dom.ELEMENT_NODE) {
+  if (node.nodeType === dom.ELEMENT_NODE) {
     var children = node.childNodes;
     for (i = 0; i < children.length; ++i) {
       child = children[i];
@@ -439,7 +441,7 @@ function elementMatchesSelectors($el: any, patterns: any) {
  * the lifecycle of {@link LITE.LITEPlugin} the real plugin object.
  *
  */
-CKEDITOR.plugins.add('lite', {
+CKEDITOR.plugins.add('liter', {
   lang: ['en', 'de', 'fr', 'pt-br'],
   _scriptsLoaded: null, // not false, which means we're loading
 
@@ -574,7 +576,7 @@ LITEPlugin.prototype = {
    * @param {LITE.configuration} config a LITE configuration object, not null, ready to be used as a local copy
    */
   init: function(ed: any, config: any) {
-    var lang = ed.lang.lite;
+    var lang = ed.lang.liter;
     this._editor = ed;
     this._domLoaded = false;
     this._editor = null;
@@ -757,7 +759,7 @@ LITEPlugin.prototype = {
 
     var tracking = undefined === track ? !this._isTracking : track,
       e = this._editor,
-      lang = this._editor.lang.lite,
+      lang = this._editor.lang.liter,
       force = options && options.force;
     if (!tracking && this._isTracking && !force) {
       var nChanges = this._tracker.countChanges({ verify: true });
@@ -795,7 +797,7 @@ LITEPlugin.prototype = {
 
   toggleShow: function(show: any, bNotify: any) {
     var vis = typeof show === 'undefined' ? !this._isVisible : show,
-      lang = this._editor.lang.lite;
+      lang = this._editor.lang.liter;
     this._isVisible = vis;
     if (this._isTracking) {
       this._setCommandsState(
@@ -1825,7 +1827,8 @@ LITEPlugin.prototype = {
     var title = this._config.tooltipTemplate || defaultTooltipTemplate,
       time: any = new Date(change.time),
       lastTime: any = new Date(change.lastTime),
-      lang: any = this._editor.lang.lite;
+      lang: any = this._editor.lang.liter;
+
     title = title.replace(
       /%a/g,
       'insert' === change.type ? lang.CHANGE_TYPE_ADDED : lang.CHANGE_TYPE_DELETED

@@ -7,9 +7,22 @@ const App: React.FC = () => {
     <div className="App">
       <CKEditor
         config={{
-          extraPlugins: 'lite',
+          allowedContent: true,
+          extraPlugins: 'liter',
+          lite: {
+            userId: 191,
+            userName: 'Matt Meiske'
+          }
         }}
-        data="<p>hello world</p>"
+        data={`<div>
+          <p>hello world</p>
+          <p>
+            one two three
+            <span class="comment-start"></span> testing <span></span>
+            <span class="comment-end"></span>
+            four fix six
+          </p>
+        <div>`}
         onBeforeLoad={(CKEDITOR: any) => {
           CKEDITOR.disableAutoInline = true;
           CKEDITOR.dtd.$removeEmpty.ins = 0;
