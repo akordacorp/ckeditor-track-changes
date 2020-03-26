@@ -2,7 +2,7 @@ import rangy from 'rangy';
 import dom from './dom';
 import Selection from './selection';
 import Bookmark from './bookmark';
-import { isAkordaMarkerElement, isAkordaUnselectable } from './akorda';
+import { isAkordaMarkerElement, isAkordaUnselectable, isAkordaComment, isFirstElementAComment, copyCommentData, isAkordaCommentStartMarker, isAkordaCommentEndMarker, insertCommentStartBefore, insertCommentEndAfter, isBookmarkStart, getBookmarkStart, getBookmarkEnd, getCommentStart, getCommentEnd } from './akorda';
 
 const ice: any = {};
 
@@ -1969,15 +1969,17 @@ class InlineChangeEditor {
     var moveLeft = options && options.moveLeft,
       contentAddNode = this._getIceNode(contentNode, INSERT_TYPE),
       ctNode,
-      range;
+      range,
+      contentDeleteNode = this._getIceNode(contentNode, DELETE_TYPE);
+
     options = options || {};
 
-    if (contentAddNode) {
+    if (contentAddNode && !contentDeleteNode) {
       return this._addDeletionInInsertNode(contentNode, contentAddNode, options);
     }
 
     range = options.range;
-    if (range && this._getIceNode(contentNode, DELETE_TYPE)) {
+    if (range && contentDeleteNode) {
       return this._deleteInDeleted(contentNode, options);
     }
     // Webkit likes to insert empty text nodes next to elements. We remove them here.
@@ -2179,30 +2181,93 @@ class InlineChangeEditor {
         parent = contentNode.parentNode,
         nChildren = parent.childNodes.length,
         ctNode;
-      parent.removeChild(contentNode);
-      ctNode = this._createIceNode(DELETE_TYPE);
-      if (options.deleteNodesCollection) {
-        options.deleteNodesCollection.push(ctNode);
-      }
-      ctNode.appendChild(contentNode);
-      if (cInd > 0 && cInd >= nChildren - 1) {
-        dom.insertAfter(contentAddNode, ctNode);
-      } else {
-        if (cInd > 0) {
-          var splitNode = this._splitNode(contentAddNode, parent, cInd);
-          this._deleteEmptyNode(splitNode);
+      if (!isAkordaMarkerElement(contentNode)) {
+        parent.removeChild(contentNode);
+        ctNode = this._createIceNode(DELETE_TYPE);
+        if (options.deleteNodesCollection) {
+          options.deleteNodesCollection.push(ctNode);
         }
-        contentAddNode.parentNode.insertBefore(ctNode, contentAddNode);
-      }
-      this._deleteEmptyNode(contentAddNode);
+        ctNode.appendChild(contentNode);
 
-      if (range && moveLeft) {
-        range.setStartBefore(ctNode);
-        range.collapse(true);
-        this.selection.addRange(range);
-      }
-      if (options && options.merge) {
-        this._mergeDeleteNode(ctNode);
+        // Check if it is a comment marker element
+        const isParentAComment = isAkordaComment(parent);
+        // Check if it is deleting the first character from the comment
+        const isDeletingCommentBeginning = (cInd === 0 && isParentAComment);
+        // Check if it is deleting the last character from the comment
+        const isDeletingCommentEnding = (cInd >= nChildren - 1 && isParentAComment);
+
+        if ((cInd > 0 && cInd >= nChildren - 1) || isDeletingCommentBeginning || isDeletingCommentEnding) {
+          if (!isDeletingCommentBeginning && !isDeletingCommentEnding) {
+            // Default behavior
+            dom.insertAfter(contentAddNode, ctNode);
+          } else {
+            if (isParentAComment) {
+              // Copy comment attributes to new 'del' element
+              copyCommentData(parent, ctNode);
+            }
+            // Condition to be sure is what we want
+            if (contentAddNode.contains(parent)) {
+              if (isDeletingCommentBeginning) {
+                // Insert the new 'del' element at the beginning
+                dom.insertBefore(parent, ctNode);
+              } else {
+                // Insert the new 'del' element at the end
+                dom.insertAfter(parent, ctNode);
+              }
+            } else {
+              // Default behavior
+              dom.insertAfter(contentAddNode, ctNode);
+            }
+          }
+        } else {
+          if (cInd > 0) {
+            var splitNode = this._splitNode(contentAddNode, parent, cInd);
+            this._deleteEmptyNode(splitNode);
+          }
+          contentAddNode.parentNode.insertBefore(ctNode, contentAddNode);
+        }
+
+        var bookmarkStart: any = getBookmarkStart(contentAddNode.parentNode);
+        var bookmarkEnd: any = getBookmarkEnd(contentAddNode.parentNode);
+        var commentStart: any = isParentAComment && getCommentStart(this.element, parent);
+        var commentEnd: any = isParentAComment && getCommentEnd(this.element, parent);
+        var repositionCommentsTags: boolean = isParentAComment && !!bookmarkStart && (commentStart.offsetLeft >= bookmarkStart.offsetLeft ||
+          commentEnd.offsetLeft >= bookmarkEnd.offsetLeft
+        );
+
+        this._deleteEmptyNode(contentAddNode);
+        if (range && moveLeft) {
+          range.setStartBefore(ctNode);
+          range.collapse(true);
+          this.selection.addRange(range);
+        }
+        if (repositionCommentsTags) {
+          if (isParentAComment && (
+              isAkordaComment(ctNode.nextElementSibling) || isFirstElementAComment(ctNode.nextElementSibling)
+              )
+            ) {
+            copyCommentData(parent, ctNode);
+          }
+          var nextElementSibling = ctNode.nextElementSibling;
+          if (!!nextElementSibling && isAkordaCommentStartMarker(nextElementSibling.children[1])) {
+            insertCommentStartBefore(nextElementSibling.children[1], ctNode);
+          } else if (!!nextElementSibling && isAkordaCommentStartMarker(nextElementSibling.children[0])) {
+            insertCommentStartBefore(nextElementSibling.children[0], ctNode);
+          } else {
+            let previousSibling = ctNode.previousElementSibling;
+            if (!!previousSibling && !!previousSibling.firstChild && isAkordaCommentStartMarker(previousSibling.firstChild) &&
+              (isBookmarkStart(previousSibling.firstChild.nextElementSibling) || (isBookmarkStart(previousSibling.firstChild.nextElementSibling.firstChild)))) {
+                insertCommentStartBefore(previousSibling.firstChild, ctNode);
+            }
+          }
+          var previousSibling = ctNode.previousElementSibling;
+          if (!!previousSibling && isAkordaCommentEndMarker(previousSibling.lastChild)) {
+            insertCommentEndAfter(previousSibling.lastChild, ctNode);
+          }
+        }
+        if (options && options.merge) {
+          this._mergeDeleteNode(ctNode);
+        }
       }
       if (range) {
         range.refresh();
