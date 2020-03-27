@@ -128,10 +128,11 @@ const LITE = {
   IS_LITE_CLASS_RE = new RegExp(
     '(?:^|s)(?:' + LITEConstants.deleteClass + '|' + LITEConstants.insertClass + ')(?:s|$)'
   ),
-  defaultTooltipDisplay = (change: any) => {
-    const action = 'insert' === change.type ? 'Added' : 'Deleted';
+  defaultTooltipDisplay = (change: any, editor: any) => {
+    const lang = editor.lang.liter;
+    const action = 'insert' === change.type ? lang.CHANGE_TYPE_ADDED : lang.CHANGE_TYPE_DELETED;
     const date = new Date(change.time).toLocaleString();
-    return `${action} by ${change.userName} on ${date}`;
+    return `${action} ${lang.BY} ${change.userName} ${lang.ON} ${date}`;
   },
   _emptyRegex = /^[\s\r\n]*$/, // for getting the clean text
   _cleanRE = [
@@ -1755,7 +1756,7 @@ LITEPlugin.prototype = {
    * @returns {Boolean}
    */ _makeTooltipTitle: function(change: any) {
     var createTooltipDisplay = this._config.tooltipDisplay || defaultTooltipDisplay;
-    return createTooltipDisplay(change);
+    return createTooltipDisplay(change, this._editor);
   },
 };
 
