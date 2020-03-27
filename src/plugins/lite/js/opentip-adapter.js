@@ -1608,7 +1608,7 @@
 		}
 	};
 
-	Opentip.defaultStyle = "standard";
+	Opentip.defaultStyle = "glass";
 	Opentip.getTips = function (element) {
 		return Opentip.adapter.data(element, "__opentips") || [];
 	}
