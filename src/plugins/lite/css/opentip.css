@@ -151,7 +151,7 @@
 .opentip-container.style-glass .opentip {
   padding: 15px 25px;
   color: #317cc5;
-  text-shadow: 1px 1px 8px rgba(0,94,153,0.3);
+  background-color: rgba(255,255,255,0.75);
 }
 .opentip-container.ot-hide-effect-fade {
   -webkit-transition: -webkit-transform 0.5s ease-in-out, opacity 1s ease-in-out;
