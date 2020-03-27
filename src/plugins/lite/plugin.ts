@@ -128,7 +128,11 @@ const LITE = {
   IS_LITE_CLASS_RE = new RegExp(
     '(?:^|s)(?:' + LITEConstants.deleteClass + '|' + LITEConstants.insertClass + ')(?:s|$)'
   ),
-  defaultTooltipTemplate = '%a by %u %t',
+  defaultTooltipDisplay = (change: any) => {
+    const action = 'insert' === change.type ? 'Added' : 'Deleted';
+    const date = new Date(change.time).toLocaleString();
+    return `${action} by ${change.userName} on ${date}`;
+  },
   _emptyRegex = /^[\s\r\n]*$/, // for getting the clean text
   _cleanRE = [
     { regex: /[\s]*title=\"[^\"]+\"/g, replace: '' },
@@ -217,63 +221,6 @@ function addPlugin(editor: any, plugin: any) {
     plugin: plugin,
     editor: editor,
   });
-}
-
-function padString(s: any, length: any, padWith: any, bSuffix?: any) {
-  if (null === s || typeof s === 'undefined') {
-    s = '';
-  } else {
-    s = String(s);
-  }
-  padWith = String(padWith);
-  var padLength = padWith.length;
-  for (var i = s.length; i < length; i += padLength) {
-    if (bSuffix) {
-      s += padWith;
-    } else {
-      s = padWith + s;
-    }
-  }
-  return s;
-}
-
-function padNumber(s: any, length: any) {
-  return padString(s, length, '0');
-}
-
-function relativeDateFormat(date: any, lang: any) {
-  var now = new Date(),
-    today = now.getDate(),
-    month = now.getMonth(),
-    year = now.getFullYear(),
-    minutes,
-    hours;
-
-  var t = typeof date;
-  if (t === 'string' || t === 'number') {
-    date = new Date(date);
-  }
-
-  if (today === date.getDate() && month === date.getMonth() && year === date.getFullYear()) {
-    minutes = Math.floor((now.getTime() - date.getTime()) / 60000);
-    if (minutes < 1) {
-      return lang.NOW;
-    } else if (minutes < 2) {
-      return lang.MINUTE_AGO;
-    } else if (minutes < 60) {
-      return lang.MINUTES_AGO.replace('xMinutes', minutes);
-    } else {
-      hours = date.getHours();
-      minutes = date.getMinutes();
-      return lang.AT + ' ' + padNumber(hours, 2) + ':' + padNumber(minutes, 2);
-    }
-  } else if (year === date.getFullYear()) {
-    return lang.ON + ' ' + lang.LITE_LABELS_DATE(date.getDate(), date.getMonth());
-  } else {
-    return (
-      lang.ON + ' ' + lang.LITE_LABELS_DATE(date.getDate(), date.getMonth(), date.getFullYear())
-    );
-  }
 }
 
 /**
@@ -396,28 +343,11 @@ function elementMatchesSelectors($el: any, patterns: any) {
  * the path (relative to the LITE plugin.js file) to jQuery
  */
 
-/**
- * @member LITE.configuration
- * @property {String} tooltipTemplate="%a by %u %t"
- * A format string used to create the content of tooltips shown over change spans
- * <h3>formats</h3>
- * (use uppercase to apply the format to the last modification date of the change span rather than the first)
- * <ul>
- * <li><strong>%a</strong>  The action, "added" or "deleted" (not internationalized yet)
- * <li><strong>%t</strong>  Timestamp of the first edit action in this change span (e.g. "now", "3 minutes ago", "August 15 1972")
- * <li><strong>%u</strong>  the name of the user who made the change
- * <li><strong>%dd</strong> double digit date of change, e.g. 02
- * <li><strong>%d</strong>  date of change, e.g. 2
- * <li><strong>%mm</strong> double digit month of change, e.g. 09
- * <li><strong>%m</strong>  month of change, e.g. 9
- * <li><strong>%yy</strong> double digit year of change, e.g. 11
- * <li><strong>%y</strong>  full month of change, e.g. 2011
- * <li><strong>%nn</strong> double digit minutes of change, e.g. 09
- * <li><strong>%n</strong>  minutes of change, e.g. 9
- * <li><strong>%hh</strong> double digit hour of change, e.g. 05
- * <li><strong>%h</strong>  hour of change, e.g. 5
- * </ul>
- */
+ /**
+  * @member LITE.configuration
+  * @property {Function} tooltipDisplay
+  * A function that is given the change object and which returns a string to be displayed in the toolitp
+  */
 
 /**
  * @member LITE.configuration
@@ -1824,41 +1754,8 @@ LITEPlugin.prototype = {
    * @param change
    * @returns {Boolean}
    */ _makeTooltipTitle: function(change: any) {
-    var title = this._config.tooltipTemplate || defaultTooltipTemplate,
-      time: any = new Date(change.time),
-      lastTime: any = new Date(change.lastTime),
-      lang: any = this._editor.lang.liter;
-
-    title = title.replace(
-      /%a/g,
-      'insert' === change.type ? lang.CHANGE_TYPE_ADDED : lang.CHANGE_TYPE_DELETED
-    );
-    title = title.replace(/%t/g, relativeDateFormat(time, lang));
-    title = title.replace(/%u/g, change.userName);
-    title = title.replace(/%dd/g, padNumber(time.getDate(), 2));
-    title = title.replace(/%d/g, time.getDate());
-    title = title.replace(/%mm/g, padNumber(time.getMonth() + 1, 2));
-    title = title.replace(/%m/g, time.getMonth() + 1);
-    title = title.replace(/%yy/g, padNumber(time.getYear() - 100, 2));
-    title = title.replace(/%y/g, time.getFullYear());
-    title = title.replace(/%nn/g, padNumber(time.getMinutes(), 2));
-    title = title.replace(/%n/g, time.getMinutes());
-    title = title.replace(/%hh/g, padNumber(time.getHours(), 2));
-    title = title.replace(/%h/g, time.getHours());
-
-    title = title.replace(/%T/g, relativeDateFormat(lastTime, lang));
-    title = title.replace(/%DD/g, padNumber(lastTime.getDate(), 2));
-    title = title.replace(/%D/g, lastTime.getDate());
-    title = title.replace(/%MM/g, padNumber(lastTime.getMonth() + 1, 2));
-    title = title.replace(/%M/g, lastTime.getMonth() + 1);
-    title = title.replace(/%YY/g, padNumber(lastTime.getYear() - 100, 2));
-    title = title.replace(/%Y/g, lastTime.getFullYear());
-    title = title.replace(/%NN/g, padNumber(lastTime.getMinutes(), 2));
-    title = title.replace(/%N/g, lastTime.getMinutes());
-    title = title.replace(/%HH/g, padNumber(lastTime.getHours(), 2));
-    title = title.replace(/%H/g, lastTime.getHours());
-
-    return title;
+    var createTooltipDisplay = this._config.tooltipDisplay || defaultTooltipDisplay;
+    return createTooltipDisplay(change);
   },
 };
 

@@ -2,7 +2,7 @@ import rangy from 'rangy';
 import dom from './dom';
 import Selection from './selection';
 import Bookmark from './bookmark';
-import { isAkordaMarkerElement, isAkordaUnselectable, isAkordaComment, isFirstElementAComment, copyCommentData, isAkordaCommentStartMarker, isAkordaCommentEndMarker, insertCommentStartBefore, insertCommentEndAfter, isBookmarkStart, getBookmarkStart, getBookmarkEnd, getCommentStart, getCommentEnd } from './akorda';
+import { isAkordaMarkerElement, isAkordaUnselectable, isAkordaComment, isFirstElementAComment, copyCommentData, isAkordaCommentStartMarker, isAkordaCommentEndMarker, insertCommentStartBefore, insertCommentEndAfter, isBookmarkStart, getBookmarkStart, getBookmarkEnd, getCommentStart, getCommentEnd, ensureMillsecondsTimestamp } from './akorda';
 
 const ice: any = {};
 
@@ -2854,11 +2854,13 @@ class InlineChangeEditor {
       if (isNaN(timeStamp)) {
         timeStamp = now;
       }
+      timeStamp = ensureMillsecondsTimestamp(timeStamp);
       // @ts-ignore
       var lastTimeStamp = parseInt(el.getAttribute(this.attributes.lastTime) || '');
       if (isNaN(lastTimeStamp)) {
         lastTimeStamp = timeStamp;
       }
+      lastTimeStamp = ensureMillsecondsTimestamp(lastTimeStamp);
       // @ts-ignore
       var sessionId = el.getAttribute(this.attributes.sessionId);
       // @ts-ignore
