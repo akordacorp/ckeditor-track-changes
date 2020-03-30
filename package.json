@@ -1,11 +1,11 @@
 {
   "name": "@akordacorp/liter",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Akorda LITEr track changes for CKEditor",
   "license": "GPL-2.0-only",
   "main": "index.js",
   "files": [
-    "plugins/**/*",
+    "liter/**/*",
     "index.js"
   ],
   "directories": {

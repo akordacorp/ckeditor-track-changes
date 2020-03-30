@@ -1830,7 +1830,11 @@
 
 		showTooltip: function (node, title, boundingElement) {
 			var options = jQuery.extend({
-					target: node,
+          target: node,
+          targetJoint: 'bottom right',
+          tipJoint: 'left',
+          borderRadius: 3,
+          borderColor: '#317cc5',
 					boundingElement: boundingElement
 				}, ttOptions),
 				tip = new Opentip(node, title, options);
