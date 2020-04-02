@@ -94,7 +94,8 @@ dom.TEXT_CONTAINER_ELEMENTS = [
   'ins',
   'del',
   'u',
-  's'
+  's',
+  'section',
 ];
 
 dom.STUB_ELEMENTS = dom.CONTENT_STUB_ELEMENTS.slice();
@@ -155,7 +156,7 @@ dom.getElementDimensions = function(element: any) {
   };
 };
 
-dom.remove = function (element: any) {
+dom.remove = function(element: any) {
   if (element) {
     return jQuery(element).remove();
   }

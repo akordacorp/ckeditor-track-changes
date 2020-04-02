@@ -2,7 +2,23 @@ import rangy from 'rangy';
 import dom from './dom';
 import Selection from './selection';
 import Bookmark from './bookmark';
-import { isAkordaMarkerElement, isAkordaUnselectable, isAkordaComment, isFirstElementAComment, copyCommentData, isAkordaCommentStartMarker, isAkordaCommentEndMarker, insertCommentStartBefore, insertCommentEndAfter, isBookmarkStart, getBookmarkStart, getBookmarkEnd, getCommentStart, getCommentEnd, ensureMillsecondsTimestamp } from './akorda';
+import {
+  isAkordaMarkerElement,
+  isAkordaUnselectable,
+  isAkordaComment,
+  isFirstElementAComment,
+  copyCommentData,
+  isAkordaCommentStartMarker,
+  isAkordaCommentEndMarker,
+  insertCommentStartBefore,
+  insertCommentEndAfter,
+  isBookmarkStart,
+  getBookmarkStart,
+  getBookmarkEnd,
+  getCommentStart,
+  getCommentEnd,
+  ensureMillsecondsTimestamp,
+} from './akorda';
 
 const ice: any = {};
 
@@ -486,7 +502,10 @@ class InlineChangeEditor {
         this._cleanupSelection(range, false, true);
         // if we're inside a current insert range, let the editor take care of the deletion
         // ignore if we are performing forward delete
-        if (!right && this._isCurrentUserIceNode(this._getIceNode(range.startContainer, INSERT_TYPE))) {
+        if (
+          !right &&
+          this._isCurrentUserIceNode(this._getIceNode(range.startContainer, INSERT_TYPE))
+        ) {
           return false;
         }
 
@@ -2192,11 +2211,15 @@ class InlineChangeEditor {
         // Check if it is a comment marker element
         const isParentAComment = isAkordaComment(parent);
         // Check if it is deleting the first character from the comment
-        const isDeletingCommentBeginning = (cInd === 0 && isParentAComment);
+        const isDeletingCommentBeginning = cInd === 0 && isParentAComment;
         // Check if it is deleting the last character from the comment
-        const isDeletingCommentEnding = (cInd >= nChildren - 1 && isParentAComment);
+        const isDeletingCommentEnding = cInd >= nChildren - 1 && isParentAComment;
 
-        if ((cInd > 0 && cInd >= nChildren - 1) || isDeletingCommentBeginning || isDeletingCommentEnding) {
+        if (
+          (cInd > 0 && cInd >= nChildren - 1) ||
+          isDeletingCommentBeginning ||
+          isDeletingCommentEnding
+        ) {
           if (!isDeletingCommentBeginning && !isDeletingCommentEnding) {
             // Default behavior
             dom.insertAfter(contentAddNode, ctNode);
@@ -2231,9 +2254,11 @@ class InlineChangeEditor {
         var bookmarkEnd: any = getBookmarkEnd(contentAddNode.parentNode);
         var commentStart: any = isParentAComment && getCommentStart(this.element, parent);
         var commentEnd: any = isParentAComment && getCommentEnd(this.element, parent);
-        var repositionCommentsTags: boolean = isParentAComment && !!bookmarkStart && ((!!commentStart && commentStart.offsetLeft >= bookmarkStart.offsetLeft) ||
-          (!!commentEnd && commentEnd.offsetLeft >= bookmarkEnd.offsetLeft)
-        );
+        var repositionCommentsTags: boolean =
+          isParentAComment &&
+          !!bookmarkStart &&
+          ((!!commentStart && commentStart.offsetLeft >= bookmarkStart.offsetLeft) ||
+            (!!commentEnd && commentEnd.offsetLeft >= bookmarkEnd.offsetLeft));
 
         this._deleteEmptyNode(contentAddNode);
         if (range && moveLeft) {
@@ -2242,22 +2267,31 @@ class InlineChangeEditor {
           this.selection.addRange(range);
         }
         if (repositionCommentsTags) {
-          if (isParentAComment && (
-              isAkordaComment(ctNode.nextElementSibling) || isFirstElementAComment(ctNode.nextElementSibling)
-              )
-            ) {
+          if (
+            isParentAComment &&
+            (isAkordaComment(ctNode.nextElementSibling) ||
+              isFirstElementAComment(ctNode.nextElementSibling))
+          ) {
             copyCommentData(parent, ctNode);
           }
           var nextElementSibling = ctNode.nextElementSibling;
           if (!!nextElementSibling && isAkordaCommentStartMarker(nextElementSibling.children[1])) {
             insertCommentStartBefore(nextElementSibling.children[1], ctNode);
-          } else if (!!nextElementSibling && isAkordaCommentStartMarker(nextElementSibling.children[0])) {
+          } else if (
+            !!nextElementSibling &&
+            isAkordaCommentStartMarker(nextElementSibling.children[0])
+          ) {
             insertCommentStartBefore(nextElementSibling.children[0], ctNode);
           } else {
             let previousSibling = ctNode.previousElementSibling;
-            if (!!previousSibling && !!previousSibling.firstChild && isAkordaCommentStartMarker(previousSibling.firstChild) &&
-              (isBookmarkStart(previousSibling.firstChild.nextElementSibling) || (isBookmarkStart(previousSibling.firstChild.nextElementSibling.firstChild)))) {
-                insertCommentStartBefore(previousSibling.firstChild, ctNode);
+            if (
+              !!previousSibling &&
+              !!previousSibling.firstChild &&
+              isAkordaCommentStartMarker(previousSibling.firstChild) &&
+              (isBookmarkStart(previousSibling.firstChild.nextElementSibling) ||
+                isBookmarkStart(previousSibling.firstChild.nextElementSibling.firstChild))
+            ) {
+              insertCommentStartBefore(previousSibling.firstChild, ctNode);
             }
           }
           var previousSibling = ctNode.previousElementSibling;
