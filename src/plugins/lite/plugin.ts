@@ -344,11 +344,11 @@ function elementMatchesSelectors($el: any, patterns: any) {
  * the path (relative to the LITE plugin.js file) to jQuery
  */
 
- /**
-  * @member LITE.configuration
-  * @property {Function} tooltipDisplay
-  * A function that is given the change object and which returns a string to be displayed in the toolitp
-  */
+/**
+ * @member LITE.configuration
+ * @property {Function} tooltipDisplay
+ * A function that is given the change object and which returns a string to be displayed in the toolitp
+ */
 
 /**
  * @member LITE.configuration
@@ -426,14 +426,12 @@ CKEDITOR.plugins.add('liter', {
 
     this._scriptsLoaded = false;
     var jQueryLoaded = typeof jQuery === 'function',
-    self = this,
-    jQueryPath = liteConfig.jQueryPath || 'js/jquery.min.js',
-    scripts: any[] = [];
+      self = this,
+      jQueryPath = liteConfig.jQueryPath || 'js/jquery.min.js',
+      scripts: any[] = [];
 
     if (!global[ttConfig.classPath]) {
-      var sources = [
-        'opentip-adapter.js',
-      ];
+      var sources = ['opentip-adapter.js'];
       for (var i = 0, len = sources.length; i < len; ++i) {
         scripts.push(path + 'js/' + sources[i]);
       }
