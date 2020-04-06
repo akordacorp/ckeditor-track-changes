@@ -1043,7 +1043,7 @@ LITEPlugin.prototype = {
         e.on('paste', paste, null, null, 1);
       }
       e.on('beforeGetData', this._onBeforeGetData.bind(this));
-      e.on('beoreUndoImage', this._onBeforeGetData.bind(this)); // treat before undo as before getdata
+      e.on('beforeUndoImage', this._onBeforeGetData.bind(this)); // treat before undo as before getdata
       e.on('insertHtml', paste, null, null, 1);
       e.on('insertText', paste, null, null, 1);
       e.on('insertElement', paste, null, null, 1);
