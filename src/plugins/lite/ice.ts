@@ -1906,6 +1906,12 @@ class InlineChangeEditor {
           range.collapse();
           return true;
         }
+
+        // let the browser merge the text (and delete the block element) when the caret is at the start of a block
+        // and the user deletes left.
+        if (prevContainer.nextSibling === parentBlock) {
+          return false;
+        }
       }
     }
 
