@@ -1908,8 +1908,12 @@ class InlineChangeEditor {
         }
 
         // let the browser merge the text (and delete the block element) when the caret is at the start of a block
-        // and the user deletes left.
-        if (prevContainer.nextSibling === parentBlock) {
+        // and the user deletes left. We check that the previous container is in a sibling branch of the caret's block
+        // branch, which indicates that we can delete all blocks in between.
+        if (
+          prevContainer.nextSibling === parentBlock ||
+          dom.contains(prevContainer.nextSibling, parentBlock)
+        ) {
           return false;
         }
       }

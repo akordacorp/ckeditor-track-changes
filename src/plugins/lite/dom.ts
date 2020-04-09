@@ -480,6 +480,10 @@ dom.getCommonAncestor = function(a: any, b: any) {
   return null;
 };
 
+dom.contains = function(container: any, element: any) {
+  return $.contains(container, element);
+};
+
 dom.getNextNode = function(node: any, container: any) {
   if (node) {
     while (node.parentNode) {
