@@ -815,6 +815,15 @@ LITEPlugin.prototype = {
   },
 
   /**
+   * Creates an (ice) tracked changes element (either insert or delete)
+   */
+  createTrackedChangeElement: function(isInsert: boolean, childNode?: any, changeId?: any) {
+    const changeType = isInsert ? 'insertType' : 'deleteType';
+    const iceNode = this._tracker && this._tracker._createIceNode(changeType, childNode, changeId);
+    return new CKEDITOR.dom.element(iceNode);
+  },
+
+  /**
    * Enable or disable the accept changes ui. This does not affect the availabibility of the accept/reject api
    * @param {Boolean} bEnable
    */
