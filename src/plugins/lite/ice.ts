@@ -18,6 +18,7 @@ import {
   getCommentStart,
   getCommentEnd,
   ensureMillsecondsTimestamp,
+  isNodeElement,
 } from './akorda';
 
 const ice: any = {};
@@ -2219,28 +2220,28 @@ class InlineChangeEditor {
         ctNode.appendChild(contentNode);
 
         // Check if it is a comment marker element
-        const isParentAComment = isAkordaComment(parent);
+        const isParentElement = isNodeElement(parent);
         // Check if it is deleting the first character from the comment
-        const isDeletingCommentBeginning = cInd === 0 && isParentAComment;
+        const isDeletingElementBeginning = cInd === 0;
         // Check if it is deleting the last character from the comment
-        const isDeletingCommentEnding = cInd >= nChildren - 1 && isParentAComment;
+        const isDeletingElementEnding = cInd >= nChildren - 1;
 
         if (
           (cInd > 0 && cInd >= nChildren - 1) ||
-          isDeletingCommentBeginning ||
-          isDeletingCommentEnding
+          isDeletingElementBeginning ||
+          isDeletingElementEnding
         ) {
-          if (!isDeletingCommentBeginning && !isDeletingCommentEnding) {
+          if (!isDeletingElementBeginning && !isDeletingElementEnding) {
             // Default behavior
             dom.insertAfter(contentAddNode, ctNode);
           } else {
-            if (isParentAComment) {
+            if (isParentElement) {
               // Copy comment attributes to new 'del' element
               copyCommentData(parent, ctNode);
             }
             // Condition to be sure is what we want
             if (contentAddNode.contains(parent)) {
-              if (isDeletingCommentBeginning) {
+              if (isDeletingElementBeginning) {
                 // Insert the new 'del' element at the beginning
                 dom.insertBefore(parent, ctNode);
               } else {
@@ -2262,10 +2263,10 @@ class InlineChangeEditor {
 
         var bookmarkStart: any = getBookmarkStart(contentAddNode.parentNode);
         var bookmarkEnd: any = getBookmarkEnd(contentAddNode.parentNode);
-        var commentStart: any = isParentAComment && getCommentStart(this.element, parent);
-        var commentEnd: any = isParentAComment && getCommentEnd(this.element, parent);
+        var commentStart: any = isParentElement && getCommentStart(this.element, parent);
+        var commentEnd: any = isParentElement && getCommentEnd(this.element, parent);
         var repositionCommentsTags: boolean =
-          isParentAComment &&
+          isParentElement &&
           !!bookmarkStart &&
           ((!!commentStart && commentStart.offsetLeft >= bookmarkStart.offsetLeft) ||
             (!!commentEnd && commentEnd.offsetLeft >= bookmarkEnd.offsetLeft));
@@ -2278,7 +2279,7 @@ class InlineChangeEditor {
         }
         if (repositionCommentsTags) {
           if (
-            isParentAComment &&
+            isParentElement &&
             (isAkordaComment(ctNode.nextElementSibling) ||
               isFirstElementAComment(ctNode.nextElementSibling))
           ) {
