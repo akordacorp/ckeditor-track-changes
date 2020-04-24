@@ -2220,12 +2220,14 @@ class InlineChangeEditor {
         ctNode.appendChild(contentNode);
 
         // Check if it is a comment marker element
+        const isParentAComment = isAkordaComment(parent);
+        // Check if it is a element
         const isParentElement = isNodeElement(parent);
         // Check if it is deleting the first character from the comment
-        const isDeletingElementBeginning = cInd === 0;
+        const isDeletingElementBeginning = cInd === 0 && isParentElement;
         // Check if it is deleting the last character from the comment
-        const isDeletingElementEnding = cInd >= nChildren - 1;
-
+        const isDeletingElementEnding = cInd >= nChildren - 1 && isParentElement;
+        let splitNode;
         if (
           (cInd > 0 && cInd >= nChildren - 1) ||
           isDeletingElementBeginning ||
@@ -2241,12 +2243,27 @@ class InlineChangeEditor {
             }
             // Condition to be sure is what we want
             if (contentAddNode.contains(parent)) {
-              if (isDeletingElementBeginning) {
-                // Insert the new 'del' element at the beginning
-                dom.insertBefore(parent, ctNode);
+              // Check if the parent element is a comment
+              if (isParentAComment) {
+                if (isDeletingElementBeginning) {
+                  // Insert the new 'del' element at the beginning
+                  dom.insertBefore(parent, ctNode);
+                } else {
+                  // Insert the new 'del' element at the end
+                  dom.insertAfter(parent, ctNode);
+                }
               } else {
-                // Insert the new 'del' element at the end
-                dom.insertAfter(parent, ctNode);
+                // The parent node is an element
+                // We needs this code to keep the elements structure and herarchy
+                // the elements are splitted but at least the text keep the formatting
+                splitNode = this._splitNode(contentAddNode, parent, cInd);
+                this._deleteEmptyNode(splitNode);
+                // Prepend or append the delete node in its parent
+                if (isDeletingElementBeginning) {
+                  parent.prepend(ctNode);
+                } else {
+                  parent.appendChild(ctNode);
+                }
               }
             } else {
               // Default behavior
@@ -2255,17 +2272,23 @@ class InlineChangeEditor {
           }
         } else {
           if (cInd > 0) {
-            var splitNode = this._splitNode(contentAddNode, parent, cInd);
+            splitNode = this._splitNode(contentAddNode, parent, cInd);
             this._deleteEmptyNode(splitNode);
           }
-          contentAddNode.parentNode.insertBefore(ctNode, contentAddNode);
+          // The parent is an element prepend or append the delete node in its parent
+          if (isParentElement) {
+            parent.prepend(ctNode);
+          } else {
+            //Default behavior
+            contentAddNode.parentNode.insertBefore(ctNode, contentAddNode);
+          }
         }
 
-        var bookmarkStart: any = getBookmarkStart(contentAddNode.parentNode);
-        var bookmarkEnd: any = getBookmarkEnd(contentAddNode.parentNode);
-        var commentStart: any = isParentElement && getCommentStart(this.element, parent);
-        var commentEnd: any = isParentElement && getCommentEnd(this.element, parent);
-        var repositionCommentsTags: boolean =
+        const bookmarkStart: any = getBookmarkStart(contentAddNode.parentNode);
+        const bookmarkEnd: any = getBookmarkEnd(contentAddNode.parentNode);
+        const commentStart: any = isParentElement && getCommentStart(this.element, parent);
+        const commentEnd: any = isParentElement && getCommentEnd(this.element, parent);
+        const repositionCommentsTags: boolean =
           isParentElement &&
           !!bookmarkStart &&
           ((!!commentStart && commentStart.offsetLeft >= bookmarkStart.offsetLeft) ||
@@ -2285,7 +2308,7 @@ class InlineChangeEditor {
           ) {
             copyCommentData(parent, ctNode);
           }
-          var nextElementSibling = ctNode.nextElementSibling;
+          const nextElementSibling = ctNode.nextElementSibling;
           if (!!nextElementSibling && isAkordaCommentStartMarker(nextElementSibling.children[1])) {
             insertCommentStartBefore(nextElementSibling.children[1], ctNode);
           } else if (
@@ -2305,7 +2328,7 @@ class InlineChangeEditor {
               insertCommentStartBefore(previousSibling.firstChild, ctNode);
             }
           }
-          var previousSibling = ctNode.previousElementSibling;
+          const previousSibling = ctNode.previousElementSibling;
           if (!!previousSibling && isAkordaCommentEndMarker(previousSibling.lastChild)) {
             insertCommentEndAfter(previousSibling.lastChild, ctNode);
           }
