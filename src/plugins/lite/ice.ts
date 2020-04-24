@@ -2221,54 +2221,39 @@ class InlineChangeEditor {
 
         // Check if it is a comment marker element
         const isParentAComment = isAkordaComment(parent);
-        // Check if it is a element
-        const isParentElement = isNodeElement(parent);
+
         // Check if it is deleting the first character from the comment
-        const isDeletingElementBeginning = cInd === 0 && isParentElement;
+        const isDeletingElementBeginning = cInd === 0;
         // Check if it is deleting the last character from the comment
-        const isDeletingElementEnding = cInd >= nChildren - 1 && isParentElement;
+        const isDeletingElementEnding = cInd >= nChildren - 1;
         let splitNode;
-        if (
-          (cInd > 0 && cInd >= nChildren - 1) ||
-          isDeletingElementBeginning ||
-          isDeletingElementEnding
-        ) {
-          if (!isDeletingElementBeginning && !isDeletingElementEnding) {
-            // Default behavior
-            dom.insertAfter(contentAddNode, ctNode);
-          } else {
-            if (isParentElement) {
-              // Copy comment attributes to new 'del' element
-              copyCommentData(parent, ctNode);
-            }
-            // Condition to be sure is what we want
-            if (contentAddNode.contains(parent)) {
-              // Check if the parent element is a comment
-              if (isParentAComment) {
-                if (isDeletingElementBeginning) {
-                  // Insert the new 'del' element at the beginning
-                  dom.insertBefore(parent, ctNode);
-                } else {
-                  // Insert the new 'del' element at the end
-                  dom.insertAfter(parent, ctNode);
-                }
+        if (isDeletingElementBeginning || isDeletingElementEnding) {
+          if (isParentAComment) {
+            // Copy comment attributes to new 'del' element
+            copyCommentData(parent, ctNode);
+          }
+          // Condition to be sure is what we want
+          if (contentAddNode.contains(parent)) {
+            // Check if the parent element is a comment
+            if (isParentAComment) {
+              if (isDeletingElementBeginning) {
+                // Insert the new 'del' element at the beginning
+                dom.insertBefore(parent, ctNode);
               } else {
-                // The parent node is an element
-                // We need this code to keep the elements structure and hierarchy
-                // the elements are splitted but at least the text keeps the formatting
-                splitNode = this._splitNode(contentAddNode, parent, cInd);
-                this._deleteEmptyNode(splitNode);
-                // Prepend or append the delete node in its parent
-                if (isDeletingElementBeginning) {
-                  parent.prepend(ctNode);
-                } else {
-                  parent.appendChild(ctNode);
-                }
+                // Insert the new 'del' element at the end
+                dom.insertAfter(parent, ctNode);
               }
             } else {
-              // Default behavior
-              dom.insertAfter(contentAddNode, ctNode);
+              // Prepend or append the delete node in its parent
+              if (isDeletingElementBeginning) {
+                parent.prepend(ctNode);
+              } else {
+                parent.appendChild(ctNode);
+              }
             }
+          } else {
+            // Default behavior
+            dom.insertAfter(contentAddNode, ctNode);
           }
         } else {
           if (cInd > 0) {
@@ -2276,7 +2261,7 @@ class InlineChangeEditor {
             this._deleteEmptyNode(splitNode);
           }
           // The parent is an element and not a comment to prepend or append the delete node
-          if (isParentElement && !isParentAComment) {
+          if (!isParentAComment) {
             parent.prepend(ctNode);
           } else {
             //Default behavior
@@ -2286,10 +2271,10 @@ class InlineChangeEditor {
 
         const bookmarkStart: any = getBookmarkStart(contentAddNode.parentNode);
         const bookmarkEnd: any = getBookmarkEnd(contentAddNode.parentNode);
-        const commentStart: any = isParentElement && getCommentStart(this.element, parent);
-        const commentEnd: any = isParentElement && getCommentEnd(this.element, parent);
+        const commentStart: any = isParentAComment && getCommentStart(this.element, parent);
+        const commentEnd: any = isParentAComment && getCommentEnd(this.element, parent);
         const repositionCommentsTags: boolean =
-          isParentElement &&
+          isParentAComment &&
           !!bookmarkStart &&
           ((!!commentStart && commentStart.offsetLeft >= bookmarkStart.offsetLeft) ||
             (!!commentEnd && commentEnd.offsetLeft >= bookmarkEnd.offsetLeft));
@@ -2302,7 +2287,7 @@ class InlineChangeEditor {
         }
         if (repositionCommentsTags) {
           if (
-            isParentElement &&
+            isParentAComment &&
             (isAkordaComment(ctNode.nextElementSibling) ||
               isFirstElementAComment(ctNode.nextElementSibling))
           ) {
