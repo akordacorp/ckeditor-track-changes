@@ -2254,8 +2254,8 @@ class InlineChangeEditor {
                 }
               } else {
                 // The parent node is an element
-                // We needs this code to keep the elements structure and herarchy
-                // the elements are splitted but at least the text keep the formatting
+                // We need this code to keep the elements structure and hierarchy
+                // the elements are splitted but at least the text keeps the formatting
                 splitNode = this._splitNode(contentAddNode, parent, cInd);
                 this._deleteEmptyNode(splitNode);
                 // Prepend or append the delete node in its parent
@@ -2275,8 +2275,8 @@ class InlineChangeEditor {
             splitNode = this._splitNode(contentAddNode, parent, cInd);
             this._deleteEmptyNode(splitNode);
           }
-          // The parent is an element prepend or append the delete node in its parent
-          if (isParentElement) {
+          // The parent is an element and not a comment to prepend or append the delete node
+          if (isParentElement && !isParentAComment) {
             parent.prepend(ctNode);
           } else {
             //Default behavior
