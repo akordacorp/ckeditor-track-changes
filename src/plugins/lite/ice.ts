@@ -2221,11 +2221,10 @@ class InlineChangeEditor {
 
         // Check if it is a comment marker element
         const isParentAComment = isAkordaComment(parent);
-
         // Check if it is deleting the first character from the comment
-        const isDeletingElementBeginning = cInd === 0;
+        const isDeletingElementBeginning = cInd === 0 && isParentAComment;
         // Check if it is deleting the last character from the comment
-        const isDeletingElementEnding = cInd >= nChildren - 1;
+        const isDeletingElementEnding = cInd >= nChildren - 1 && isParentAComment;
         let splitNode;
         if (isDeletingElementBeginning || isDeletingElementEnding) {
           if (isParentAComment) {
@@ -2234,39 +2233,23 @@ class InlineChangeEditor {
           }
           // Condition to be sure is what we want
           if (contentAddNode.contains(parent)) {
-            // Check if the parent element is a comment
-            if (isParentAComment) {
-              if (isDeletingElementBeginning) {
-                // Insert the new 'del' element at the beginning
-                dom.insertBefore(parent, ctNode);
-              } else {
-                // Insert the new 'del' element at the end
-                dom.insertAfter(parent, ctNode);
-              }
+            if (isDeletingElementBeginning) {
+              // Insert the new 'del' element at the beginning
+              dom.insertBefore(parent, ctNode);
             } else {
-              // Prepend or append the delete node in its parent
-              if (isDeletingElementBeginning) {
-                parent.prepend(ctNode);
-              } else {
-                parent.appendChild(ctNode);
-              }
+              // Insert the new 'del' element at the end
+              dom.insertAfter(parent, ctNode);
             }
           } else {
             // Default behavior
             dom.insertAfter(contentAddNode, ctNode);
           }
         } else {
-          if (cInd > 0) {
+          if (cInd >= 0) {
             splitNode = this._splitNode(contentAddNode, parent, cInd);
             this._deleteEmptyNode(splitNode);
           }
-          // The parent is an element and not a comment to prepend or append the delete node
-          if (!isParentAComment) {
-            parent.prepend(ctNode);
-          } else {
-            //Default behavior
-            contentAddNode.parentNode.insertBefore(ctNode, contentAddNode);
-          }
+          contentAddNode.parentNode.insertBefore(ctNode, contentAddNode);
         }
 
         const bookmarkStart: any = getBookmarkStart(contentAddNode.parentNode);
