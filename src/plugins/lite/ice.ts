@@ -2226,10 +2226,8 @@ class InlineChangeEditor {
         // Check if it is deleting the last character from the comment
         const isDeletingElementEnding = cInd >= nChildren - 1 && isParentAComment;
         if (isDeletingElementBeginning || isDeletingElementEnding) {
-          if (isParentAComment) {
-            // Copy comment attributes to new 'del' element
-            copyCommentData(parent, ctNode);
-          }
+          // Copy comment attributes to new 'del' element
+          copyCommentData(parent, ctNode);
           // Condition to be sure is what we want
           if (contentAddNode.contains(parent)) {
             if (isDeletingElementBeginning) {
@@ -2244,11 +2242,16 @@ class InlineChangeEditor {
             dom.insertAfter(contentAddNode, ctNode);
           }
         } else {
-          if (cInd >= 0) {
-            const splitNode = this._splitNode(contentAddNode, parent, cInd);
-            this._deleteEmptyNode(splitNode);
+          if (cInd > 0 && cInd >= nChildren - 1) {
+            dom.insertAfter(contentAddNode, ctNode);
+          } else {
+            if (cInd >= 0) {
+              const splitNode = this._splitNode(contentAddNode, parent, cInd);
+              this._deleteEmptyNode(splitNode);
+            }
+            contentAddNode.parentNode.insertBefore(ctNode, contentAddNode);
           }
-          contentAddNode.parentNode.insertBefore(ctNode, contentAddNode);
+          this._deleteEmptyNode(contentAddNode);
         }
 
         const bookmarkStart: any = getBookmarkStart(contentAddNode.parentNode);
