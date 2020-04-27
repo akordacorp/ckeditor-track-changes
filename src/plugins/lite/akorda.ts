@@ -64,10 +64,6 @@ export const isAkordaComment = (node: Node): boolean => {
   return hasClassFrom(node, [AKORDA_CLASS_NAMES.MARKER_COMMENT]);
 };
 
-export const isNodeElement = (node: Node): boolean => {
-  return node.nodeType === Node.ELEMENT_NODE;
-};
-
 export const isAkordaCommentIcon = (node: Node): boolean => {
   return hasClassFrom(node, [AKORDA_CLASS_NAMES.MARKER_IMAGE]);
 };

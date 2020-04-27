@@ -2,24 +2,7 @@ import rangy from 'rangy';
 import dom from './dom';
 import Selection from './selection';
 import Bookmark from './bookmark';
-import {
-  isAkordaMarkerElement,
-  isAkordaUnselectable,
-  isAkordaComment,
-  isFirstElementAComment,
-  copyCommentData,
-  isAkordaCommentStartMarker,
-  isAkordaCommentEndMarker,
-  insertCommentStartBefore,
-  insertCommentEndAfter,
-  isBookmarkStart,
-  getBookmarkStart,
-  getBookmarkEnd,
-  getCommentStart,
-  getCommentEnd,
-  ensureMillsecondsTimestamp,
-  isNodeElement,
-} from './akorda';
+import { isAkordaMarkerElement, isAkordaUnselectable, ensureMillsecondsTimestamp } from './akorda';
 
 const ice: any = {};
 
