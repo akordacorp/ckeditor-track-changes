@@ -2223,9 +2223,7 @@ class InlineChangeEditor {
         const isParentAComment = isAkordaComment(parent);
         // Check if it is deleting the first character from the comment
         const isDeletingElementBeginning = cInd === 0 && isParentAComment;
-        // Check if it is deleting the last character from the comment
-        const isDeletingElementEnding = cInd >= nChildren - 1 && isParentAComment;
-        if (isDeletingElementBeginning || isDeletingElementEnding) {
+        if (isParentAComment) {
           // Copy comment attributes to new 'del' element
           copyCommentData(parent, ctNode);
           // Condition to be sure is what we want
