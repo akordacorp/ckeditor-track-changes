@@ -2207,10 +2207,27 @@ class InlineChangeEditor {
       }
     } else {
       // other user insert
-      var cInd = rangy.dom.getNodeIndex(contentNode),
+      let cInd = rangy.dom.getNodeIndex(contentNode),
         parent = contentNode.parentNode,
         nChildren = parent.childNodes.length,
         ctNode;
+      const defaultDeleteBehavior = (
+        contentAddNode: any,
+        ctNode: any,
+        cInd: number,
+        nChildren: any,
+        parent: any
+      ) => {
+        if (cInd > 0 && cInd >= nChildren - 1 && parent.isEqualNode(contentAddNode)) {
+          dom.insertAfter(contentAddNode, ctNode);
+        } else {
+          if (cInd > 0 || nChildren > 0) {
+            const splitNode = this._splitNode(contentAddNode, parent, cInd);
+            this._deleteEmptyNode(splitNode);
+          }
+          contentAddNode.parentNode.insertBefore(ctNode, contentAddNode);
+        }
+      };
       if (!isAkordaMarkerElement(contentNode)) {
         parent.removeChild(contentNode);
         ctNode = this._createIceNode(DELETE_TYPE);
@@ -2223,11 +2240,16 @@ class InlineChangeEditor {
         const isParentAComment = isAkordaComment(parent);
         // Check if it is deleting the first character from the comment
         const isDeletingElementBeginning = cInd === 0 && isParentAComment;
+        // Check if it is deleting the last character from the comment
+        const isDeletingElementEnding = cInd >= nChildren - 1 && isParentAComment;
         if (isParentAComment) {
           // Copy comment attributes to new 'del' element
           copyCommentData(parent, ctNode);
           // Condition to be sure is what we want
-          if (contentAddNode.contains(parent)) {
+          if (
+            contentAddNode.contains(parent) &&
+            (isDeletingElementBeginning || isDeletingElementEnding)
+          ) {
             if (isDeletingElementBeginning) {
               // Insert the new 'del' element at the beginning
               dom.insertBefore(parent, ctNode);
@@ -2237,18 +2259,11 @@ class InlineChangeEditor {
             }
           } else {
             // Default behavior
-            dom.insertAfter(contentAddNode, ctNode);
+            defaultDeleteBehavior(contentAddNode, ctNode, cInd, nChildren, parent);
           }
         } else {
-          if (cInd > 0 && cInd >= nChildren - 1 && parent.isEqualNode(contentAddNode)) {
-            dom.insertAfter(contentAddNode, ctNode);
-          } else {
-            if (cInd > 0 || nChildren > 0) {
-              const splitNode = this._splitNode(contentAddNode, parent, cInd);
-              this._deleteEmptyNode(splitNode);
-            }
-            contentAddNode.parentNode.insertBefore(ctNode, contentAddNode);
-          }
+          // Default behavior
+          defaultDeleteBehavior(contentAddNode, ctNode, cInd, nChildren, parent);
         }
 
         const bookmarkStart: any = getBookmarkStart(contentAddNode.parentNode);
