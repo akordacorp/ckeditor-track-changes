@@ -2242,16 +2242,15 @@ class InlineChangeEditor {
             dom.insertAfter(contentAddNode, ctNode);
           }
         } else {
-          if (cInd > 0 && cInd >= nChildren - 1) {
+          if (cInd > 0 && cInd >= nChildren - 1 && parent.isEqualNode(contentAddNode)) {
             dom.insertAfter(contentAddNode, ctNode);
           } else {
-            if (cInd >= 0) {
+            if (cInd > 0 || nChildren > 0) {
               const splitNode = this._splitNode(contentAddNode, parent, cInd);
               this._deleteEmptyNode(splitNode);
             }
             contentAddNode.parentNode.insertBefore(ctNode, contentAddNode);
           }
-          this._deleteEmptyNode(contentAddNode);
         }
 
         const bookmarkStart: any = getBookmarkStart(contentAddNode.parentNode);
