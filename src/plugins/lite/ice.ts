@@ -2,23 +2,7 @@ import rangy from 'rangy';
 import dom from './dom';
 import Selection from './selection';
 import Bookmark from './bookmark';
-import {
-  isAkordaMarkerElement,
-  isAkordaUnselectable,
-  isAkordaComment,
-  isFirstElementAComment,
-  copyCommentData,
-  isAkordaCommentStartMarker,
-  isAkordaCommentEndMarker,
-  insertCommentStartBefore,
-  insertCommentEndAfter,
-  isBookmarkStart,
-  getBookmarkStart,
-  getBookmarkEnd,
-  getCommentStart,
-  getCommentEnd,
-  ensureMillsecondsTimestamp,
-} from './akorda';
+import { isAkordaMarkerElement, isAkordaUnselectable, ensureMillsecondsTimestamp } from './akorda';
 
 const ice: any = {};
 
@@ -150,13 +134,18 @@ class InlineChangeEditor {
   _showingTips: any;
   _domObserverTimeout: any;
   _domObserver: any; // don't think this is used (meiske)
+  editor: any;
 
   constructor(options: any) {
     options || (options = {});
     if (!options.element) {
       throw new Error('options.element must be defined for ice construction.');
     }
+    if (!options.editor) {
+      throw new Error('options.editor must be defined for ice construction');
+    }
     this.element = options.element;
+    this.editor = options.editor;
     this._changes = {};
     // Tracks all of the styles for users according to the following model:
     //	[userId] => styleId; where style is "this.stylePrefix" + "this.uniqueStyleIndex"
@@ -2210,108 +2199,54 @@ class InlineChangeEditor {
         parent = contentNode.parentNode,
         nChildren = parent.childNodes.length,
         ctNode;
-      if (!isAkordaMarkerElement(contentNode)) {
-        parent.removeChild(contentNode);
-        ctNode = this._createIceNode(DELETE_TYPE);
-        if (options.deleteNodesCollection) {
-          options.deleteNodesCollection.push(ctNode);
-        }
+
+      const isParentTheInsert = parent.isEqualNode(contentAddNode);
+
+      ctNode = this._createIceNode(DELETE_TYPE);
+      if (options.deleteNodesCollection) {
+        options.deleteNodesCollection.push(ctNode);
+      }
+      parent.removeChild(contentNode);
+      if (isParentTheInsert) {
         ctNode.appendChild(contentNode);
-
-        // Check if it is a comment marker element
-        const isParentAComment = isAkordaComment(parent);
-        // Check if it is deleting the first character from the comment
-        const isDeletingCommentBeginning = cInd === 0 && isParentAComment;
-        // Check if it is deleting the last character from the comment
-        const isDeletingCommentEnding = cInd >= nChildren - 1 && isParentAComment;
-
-        if (
-          (cInd > 0 && cInd >= nChildren - 1) ||
-          isDeletingCommentBeginning ||
-          isDeletingCommentEnding
-        ) {
-          if (!isDeletingCommentBeginning && !isDeletingCommentEnding) {
-            // Default behavior
-            dom.insertAfter(contentAddNode, ctNode);
-          } else {
-            if (isParentAComment) {
-              // Copy comment attributes to new 'del' element
-              copyCommentData(parent, ctNode);
-            }
-            // Condition to be sure is what we want
-            if (contentAddNode.contains(parent)) {
-              if (isDeletingCommentBeginning) {
-                // Insert the new 'del' element at the beginning
-                dom.insertBefore(parent, ctNode);
-              } else {
-                // Insert the new 'del' element at the end
-                dom.insertAfter(parent, ctNode);
-              }
-            } else {
-              // Default behavior
-              dom.insertAfter(contentAddNode, ctNode);
-            }
-          }
-        } else {
-          if (cInd > 0) {
-            var splitNode = this._splitNode(contentAddNode, parent, cInd);
-            this._deleteEmptyNode(splitNode);
-          }
-          contentAddNode.parentNode.insertBefore(ctNode, contentAddNode);
+      } else {
+        const clonedParent = parent.cloneNode();
+        clonedParent.appendChild(contentNode);
+        ctNode.appendChild(clonedParent);
+      }
+      if (isParentTheInsert && cInd > 0 && cInd >= nChildren - 1) {
+        dom.insertAfter(contentAddNode, ctNode);
+      } else {
+        if (cInd > 0 || !isParentTheInsert) {
+          var splitNode = this._splitNode(contentAddNode, parent, cInd);
+          this._deleteEmptyNode(splitNode);
         }
+        contentAddNode.parentNode.insertBefore(ctNode, contentAddNode);
+      }
+      // find the comment marker and move it before assessing _deleteEmptyNode
+      if (dom.hasNoTextOrStubContent(contentAddNode)) {
+        const commentMarker = contentAddNode.querySelector('.comment-marker');
+        if (!!commentMarker) {
+          commentMarker.parentNode.remove(commentMarker);
+          contentAddNode.parentNode.insertBefore(commentMarker, contentAddNode);
+        }
+      }
+      this._deleteEmptyNode(contentAddNode);
 
-        var bookmarkStart: any = getBookmarkStart(contentAddNode.parentNode);
-        var bookmarkEnd: any = getBookmarkEnd(contentAddNode.parentNode);
-        var commentStart: any = isParentAComment && getCommentStart(this.element, parent);
-        var commentEnd: any = isParentAComment && getCommentEnd(this.element, parent);
-        var repositionCommentsTags: boolean =
-          isParentAComment &&
-          !!bookmarkStart &&
-          ((!!commentStart && commentStart.offsetLeft >= bookmarkStart.offsetLeft) ||
-            (!!commentEnd && commentEnd.offsetLeft >= bookmarkEnd.offsetLeft));
-
-        this._deleteEmptyNode(contentAddNode);
-        if (range && moveLeft) {
-          range.setStartBefore(ctNode);
-          range.collapse(true);
-          this.selection.addRange(range);
-        }
-        if (repositionCommentsTags) {
-          if (
-            isParentAComment &&
-            (isAkordaComment(ctNode.nextElementSibling) ||
-              isFirstElementAComment(ctNode.nextElementSibling))
-          ) {
-            copyCommentData(parent, ctNode);
-          }
-          var nextElementSibling = ctNode.nextElementSibling;
-          if (!!nextElementSibling && isAkordaCommentStartMarker(nextElementSibling.children[1])) {
-            insertCommentStartBefore(nextElementSibling.children[1], ctNode);
-          } else if (
-            !!nextElementSibling &&
-            isAkordaCommentStartMarker(nextElementSibling.children[0])
-          ) {
-            insertCommentStartBefore(nextElementSibling.children[0], ctNode);
-          } else {
-            let previousSibling = ctNode.previousElementSibling;
-            if (
-              !!previousSibling &&
-              !!previousSibling.firstChild &&
-              isAkordaCommentStartMarker(previousSibling.firstChild) &&
-              (isBookmarkStart(previousSibling.firstChild.nextElementSibling) ||
-                isBookmarkStart(previousSibling.firstChild.nextElementSibling.firstChild))
-            ) {
-              insertCommentStartBefore(previousSibling.firstChild, ctNode);
-            }
-          }
-          var previousSibling = ctNode.previousElementSibling;
-          if (!!previousSibling && isAkordaCommentEndMarker(previousSibling.lastChild)) {
-            insertCommentEndAfter(previousSibling.lastChild, ctNode);
-          }
-        }
-        if (options && options.merge) {
-          this._mergeDeleteNode(ctNode);
-        }
+      if (range && moveLeft) {
+        range.setStartBefore(ctNode);
+        range.collapse(true);
+        this.selection.addRange(range);
+      }
+      if (options && options.merge) {
+        this._mergeDeleteNode(ctNode);
+        const toNormalize = new CKEDITOR.dom.element(ctNode);
+        toNormalize
+          .getChildren()
+          .toArray()
+          .forEach((child: any) => {
+            !!child.mergeSiblings && child.mergeSiblings(false);
+          });
       }
       if (range) {
         range.refresh();

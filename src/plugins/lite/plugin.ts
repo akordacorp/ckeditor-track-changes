@@ -1072,6 +1072,7 @@ LITEPlugin.prototype = {
       return;
     }
     var iceprops: any = {
+      editor: this._editor,
       styleColorsNumber: 1,
       element: body,
       mergeBlocks: false,
