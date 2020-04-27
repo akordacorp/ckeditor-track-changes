@@ -2206,10 +2206,27 @@ class InlineChangeEditor {
       }
     } else {
       // other user insert
-      var cInd = rangy.dom.getNodeIndex(contentNode),
+      let cInd = rangy.dom.getNodeIndex(contentNode),
         parent = contentNode.parentNode,
         nChildren = parent.childNodes.length,
         ctNode;
+      const defaultDeleteBehavior = (
+        contentAddNode: any,
+        ctNode: any,
+        cInd: number,
+        nChildren: any,
+        parent: any
+      ) => {
+        if (cInd > 0 && cInd >= nChildren - 1 && parent.isEqualNode(contentAddNode)) {
+          dom.insertAfter(contentAddNode, ctNode);
+        } else {
+          if (cInd > 0 || nChildren > 0) {
+            const splitNode = this._splitNode(contentAddNode, parent, cInd);
+            this._deleteEmptyNode(splitNode);
+          }
+          contentAddNode.parentNode.insertBefore(ctNode, contentAddNode);
+        }
+      };
       if (!isAkordaMarkerElement(contentNode)) {
         parent.removeChild(contentNode);
         ctNode = this._createIceNode(DELETE_TYPE);
@@ -2221,50 +2238,38 @@ class InlineChangeEditor {
         // Check if it is a comment marker element
         const isParentAComment = isAkordaComment(parent);
         // Check if it is deleting the first character from the comment
-        const isDeletingCommentBeginning = cInd === 0 && isParentAComment;
+        const isDeletingElementBeginning = cInd === 0 && isParentAComment;
         // Check if it is deleting the last character from the comment
-        const isDeletingCommentEnding = cInd >= nChildren - 1 && isParentAComment;
-
-        if (
-          (cInd > 0 && cInd >= nChildren - 1) ||
-          isDeletingCommentBeginning ||
-          isDeletingCommentEnding
-        ) {
-          if (!isDeletingCommentBeginning && !isDeletingCommentEnding) {
-            // Default behavior
-            dom.insertAfter(contentAddNode, ctNode);
-          } else {
-            if (isParentAComment) {
-              // Copy comment attributes to new 'del' element
-              copyCommentData(parent, ctNode);
-            }
-            // Condition to be sure is what we want
-            if (contentAddNode.contains(parent)) {
-              if (isDeletingCommentBeginning) {
-                // Insert the new 'del' element at the beginning
-                dom.insertBefore(parent, ctNode);
-              } else {
-                // Insert the new 'del' element at the end
-                dom.insertAfter(parent, ctNode);
-              }
+        const isDeletingElementEnding = cInd >= nChildren - 1 && isParentAComment;
+        if (isParentAComment) {
+          // Copy comment attributes to new 'del' element
+          copyCommentData(parent, ctNode);
+          // Condition to be sure is what we want
+          if (
+            contentAddNode.contains(parent) &&
+            (isDeletingElementBeginning || isDeletingElementEnding)
+          ) {
+            if (isDeletingElementBeginning) {
+              // Insert the new 'del' element at the beginning
+              dom.insertBefore(parent, ctNode);
             } else {
-              // Default behavior
-              dom.insertAfter(contentAddNode, ctNode);
+              // Insert the new 'del' element at the end
+              dom.insertAfter(parent, ctNode);
             }
+          } else {
+            // Default behavior
+            defaultDeleteBehavior(contentAddNode, ctNode, cInd, nChildren, parent);
           }
         } else {
-          if (cInd > 0) {
-            var splitNode = this._splitNode(contentAddNode, parent, cInd);
-            this._deleteEmptyNode(splitNode);
-          }
-          contentAddNode.parentNode.insertBefore(ctNode, contentAddNode);
+          // Default behavior
+          defaultDeleteBehavior(contentAddNode, ctNode, cInd, nChildren, parent);
         }
 
-        var bookmarkStart: any = getBookmarkStart(contentAddNode.parentNode);
-        var bookmarkEnd: any = getBookmarkEnd(contentAddNode.parentNode);
-        var commentStart: any = isParentAComment && getCommentStart(this.element, parent);
-        var commentEnd: any = isParentAComment && getCommentEnd(this.element, parent);
-        var repositionCommentsTags: boolean =
+        const bookmarkStart: any = getBookmarkStart(contentAddNode.parentNode);
+        const bookmarkEnd: any = getBookmarkEnd(contentAddNode.parentNode);
+        const commentStart: any = isParentAComment && getCommentStart(this.element, parent);
+        const commentEnd: any = isParentAComment && getCommentEnd(this.element, parent);
+        const repositionCommentsTags: boolean =
           isParentAComment &&
           !!bookmarkStart &&
           ((!!commentStart && commentStart.offsetLeft >= bookmarkStart.offsetLeft) ||
@@ -2284,7 +2289,7 @@ class InlineChangeEditor {
           ) {
             copyCommentData(parent, ctNode);
           }
-          var nextElementSibling = ctNode.nextElementSibling;
+          const nextElementSibling = ctNode.nextElementSibling;
           if (!!nextElementSibling && isAkordaCommentStartMarker(nextElementSibling.children[1])) {
             insertCommentStartBefore(nextElementSibling.children[1], ctNode);
           } else if (
@@ -2304,7 +2309,7 @@ class InlineChangeEditor {
               insertCommentStartBefore(previousSibling.firstChild, ctNode);
             }
           }
-          var previousSibling = ctNode.previousElementSibling;
+          const previousSibling = ctNode.previousElementSibling;
           if (!!previousSibling && isAkordaCommentEndMarker(previousSibling.lastChild)) {
             insertCommentEndAfter(previousSibling.lastChild, ctNode);
           }
