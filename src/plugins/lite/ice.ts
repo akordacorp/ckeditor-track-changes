@@ -18,7 +18,6 @@ import {
   getCommentStart,
   getCommentEnd,
   ensureMillsecondsTimestamp,
-  isNodeElement,
 } from './akorda';
 
 const ice: any = {};
