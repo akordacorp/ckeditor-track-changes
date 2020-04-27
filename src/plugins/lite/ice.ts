@@ -2225,7 +2225,6 @@ class InlineChangeEditor {
         const isDeletingElementBeginning = cInd === 0 && isParentAComment;
         // Check if it is deleting the last character from the comment
         const isDeletingElementEnding = cInd >= nChildren - 1 && isParentAComment;
-        let splitNode;
         if (isDeletingElementBeginning || isDeletingElementEnding) {
           if (isParentAComment) {
             // Copy comment attributes to new 'del' element
@@ -2246,7 +2245,7 @@ class InlineChangeEditor {
           }
         } else {
           if (cInd >= 0) {
-            splitNode = this._splitNode(contentAddNode, parent, cInd);
+            const splitNode = this._splitNode(contentAddNode, parent, cInd);
             this._deleteEmptyNode(splitNode);
           }
           contentAddNode.parentNode.insertBefore(ctNode, contentAddNode);
