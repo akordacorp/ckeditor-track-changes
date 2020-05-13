@@ -2,7 +2,7 @@ import rangy from 'rangy';
 import dom from './dom';
 import Selection from './selection';
 import Bookmark from './bookmark';
-import { isAkordaMarkerElement, isAkordaUnselectable, ensureMillsecondsTimestamp } from './akorda';
+import { isAkordaMarkerElement, isAkordaUnselectable } from './akorda';
 
 const ice: any = {};
 
@@ -125,8 +125,6 @@ class InlineChangeEditor {
   contentEditable: any = undefined; //dfl, start with a neutral value
   // Switch for toggling track changes on/off - when `false` events will be ignored.
   _isTracking: boolean = true;
-  tooltips: any = false;
-  tooltipsDelay: any = 1;
   _isVisible: boolean = true; // state of change tracking visibility
   _changeData: any = null; // a string you can associate with the current change set, e.g. version
   _handleSelectAll: boolean = false; // if true, handle ctrl/cmd-A in the change tracker
@@ -155,19 +153,8 @@ class InlineChangeEditor {
     this._savedNodesMap = {};
     this.$this = $(this);
     this._browser = dom.browser();
-    this._tooltipMouseOver = this._tooltipMouseOver.bind(this);
-    this._tooltipMouseOut = this._tooltipMouseOut.bind(this);
 
     $.extend(true, this, options);
-    if (
-      options.tooltips &&
-      (!$.isFunction(options.hostMethods.showTooltip) ||
-        !$.isFunction(options.hostMethods.hideTooltip))
-    ) {
-      throw new Error(
-        'hostMethods.showTooltip and hostMethods.hideTooltip must be defined if tooltips is true'
-      );
-    }
     var us = options.userStyles || {}; // dfl, moved from prototype, allow preconfig
     for (var id in us) {
       if (us.hasOwnProperty(id)) {
@@ -213,7 +200,6 @@ class InlineChangeEditor {
     this.initializeEnvironment();
     this.initializeEditor();
     this.initializeRange();
-    this._updateTooltipsState(); //dfl
 
     return this;
   }
@@ -240,7 +226,6 @@ class InlineChangeEditor {
       logError(e, 'While trying to stop tracking');
     }
 
-    this._updateTooltipsState();
     return this;
   }
 
@@ -282,7 +267,6 @@ class InlineChangeEditor {
    */
   initializeEditor() {
     this._loadFromDom(); // refactored by dfl
-    this._updateTooltipsState(); // dfl
   }
 
   /**
@@ -365,16 +349,6 @@ class InlineChangeEditor {
    */
   setSessionId(sid: any) {
     this._sessionId = sid;
-  }
-
-  /**
-   * Sets or toggles the tooltips state.
-   * @param {Boolean} bTooltips if undefined, the tracking state is toggled, otherwise set to the parameter
-   */
-  toggleTooltips(bTooltips: any) {
-    bTooltips = undefined === bTooltips ? !this.tooltips : Boolean(bTooltips);
-    this.tooltips = bTooltips;
-    this._updateTooltipsState();
   }
 
   visible(el: any) {
@@ -1287,8 +1261,6 @@ class InlineChangeEditor {
     $(ctNode)
       .attr(attributes)
       .addClass(change.style);
-    /* Added by dfl */
-    this._updateNodeTooltip(ctNode);
   }
 
   getChange(changeid: any) {
@@ -2569,8 +2541,6 @@ class InlineChangeEditor {
     bShow = Boolean(bShow);
     this._isVisible = bShow;
     $body.toggleClass('ICE-Tracking', bShow);
-    this._showTitles(bShow);
-    this._updateTooltipsState();
   }
 
   reload() {
@@ -2678,9 +2648,6 @@ class InlineChangeEditor {
     leftRange.setEnd(atNode, atOffset);
     left = leftRange.extractContents();
     parent.insertBefore(left, node);
-    if (this.isInsideChange(node, true)) {
-      this._updateNodeTooltip(node.previousSibling);
-    }
     return node.previousSibling;
   }
 
@@ -2694,12 +2661,6 @@ class InlineChangeEditor {
       if (options && options.isText) {
         this.$this.trigger('textChange');
       }
-    }
-  }
-
-  _updateNodeTooltip(node: any) {
-    if (this.tooltips && this._isVisible) {
-      this._addTooltip(node);
     }
   }
 
@@ -2833,13 +2794,11 @@ class InlineChangeEditor {
       if (isNaN(timeStamp)) {
         timeStamp = now;
       }
-      timeStamp = ensureMillsecondsTimestamp(timeStamp);
       // @ts-ignore
       var lastTimeStamp = parseInt(el.getAttribute(this.attributes.lastTime) || '');
       if (isNaN(lastTimeStamp)) {
         lastTimeStamp = timeStamp;
       }
-      lastTimeStamp = ensureMillsecondsTimestamp(lastTimeStamp);
       // @ts-ignore
       var sessionId = el.getAttribute(this.attributes.sessionId);
       // @ts-ignore
@@ -2856,95 +2815,9 @@ class InlineChangeEditor {
         data: changeData,
       };
       // @ts-ignore
-      this._updateNodeTooltip(el);
     }.bind(this);
     nodes.each(f);
     this._triggerChange();
-  }
-
-  _showTitles(bShow: any) {
-    var nodes = this.getIceNodes();
-    if (bShow) {
-      $(nodes).each(
-        function(i: any, node: any) {
-          // @ts-ignore
-          this._updateNodeTooltip(node);
-        }.bind(this)
-      );
-    } else {
-      $(nodes).removeAttr('title');
-    }
-  }
-
-  _updateTooltipsState() {
-    var $nodes,
-      self = this;
-    // show tooltips if they are enabled and change tracking is on
-    if (this.tooltips && this._isVisible) {
-      if (!this._showingTips) {
-        this._showingTips = true;
-        $nodes = this.getIceNodes();
-        $nodes.each(function(i, node) {
-          self._addTooltip(node);
-        });
-      }
-    } else if (this._showingTips) {
-      this._showingTips = false;
-      $nodes = this.getIceNodes();
-      $nodes.each(function(i, node) {
-        $(node)
-          .unbind('mouseover')
-          .unbind('mouseout');
-      });
-    }
-  }
-
-  _addTooltip(node: any) {
-    $(node)
-      .unbind('mouseover')
-      .unbind('mouseout')
-      .mouseover(this._tooltipMouseOver)
-      .mouseout(this._tooltipMouseOut);
-  }
-
-  _tooltipMouseOver(event: any) {
-    var node = event.currentTarget,
-      $node = $(node),
-      to,
-      self = this;
-    if (event.buttons || $node.data('_tooltip_t')) {
-      return;
-    }
-    to = setTimeout(function() {
-      var iceNode = self.currentChangeNode(node),
-        cid = iceNode && iceNode.getAttribute(self.attributes.changeId),
-        change = cid && self.getChange(cid);
-      if (change) {
-        var type = dom.hasClass(iceNode, self._getIceNodeClass(INSERT_TYPE)) ? 'insert' : 'delete';
-        $node.removeData('_tooltip_t');
-        self.hostMethods.showTooltip(node, {
-          userName: change.username,
-          changeId: cid,
-          userId: change.userid,
-          time: change.time,
-          lastTime: change.lastTime,
-          type: type,
-        });
-      }
-    }, this.tooltipsDelay);
-    $node.data('_tooltip_t', to);
-  }
-
-  _tooltipMouseOut(event: any) {
-    var node = event.currentTarget,
-      $node = $(node),
-      to = $node.data('_tooltip_t');
-    $node.removeData('_tooltip_t');
-    if (to) {
-      clearTimeout(to);
-    } else {
-      this.hostMethods.hideTooltip(node);
-    }
   }
 
   /**
