@@ -97,15 +97,7 @@ const LITE = {
       REJECT_ALL: 'lite-rejectall',
       ACCEPT_ONE: 'lite-acceptone',
       REJECT_ONE: 'lite-rejectone',
-      TOGGLE_TOOLTIPS: 'lite-toggletooltips',
     },
-  },
-  tooltipDefaults = {
-    show: true,
-    path: 'js/opentip-adapter.js',
-    classPath: 'OpentipAdapter',
-    cssPath: 'css/opentip.css',
-    delay: 500,
   },
   LITEConstants = {
     deleteTag: 'del',
@@ -128,12 +120,6 @@ const LITE = {
   IS_LITE_CLASS_RE = new RegExp(
     '(?:^|s)(?:' + LITEConstants.deleteClass + '|' + LITEConstants.insertClass + ')(?:s|$)'
   ),
-  defaultTooltipDisplay = (change: any, editor: any) => {
-    const lang = editor.lang.liter;
-    const action = 'insert' === change.type ? lang.CHANGE_TYPE_ADDED : lang.CHANGE_TYPE_DELETED;
-    const date = new Date(change.time).toLocaleString();
-    return `${action} ${lang.BY} ${change.userName} ${lang.ON} ${date}`;
-  },
   _emptyRegex = /^[\s\r\n]*$/, // for getting the clean text
   _cleanRE = [
     { regex: /[\s]*title=\"[^\"]+\"/g, replace: '' },
@@ -322,32 +308,8 @@ function elementMatchesSelectors($el: any, patterns: any) {
 
 /**
  * @member LITE.configuration
- * @property {Object} tooltips
- * Configures the tooltips shown by LITE
- * <div><strong>Omit the classPath member in order to get tooltips in standard html title elements</strong></div>
- * These are the default values used by LITE:
- * <pre>
- * 	lite.tooltips = {
- * 		show: true, // set to false to prevent tooltips
- * 		path: "js/opentip-adapter.js", // change to point to your own implementation
- * 		classPath: "OpentipAdapter", // the full name of tooltip class construtor
- * 		cssPath: "css/opentip.css", // the stylesheet file of the tooltips
- * 		delay: 500 // the delay in milliseconds between hovering over a change node and the appearance of a tooltip
- * 	};
- * </pre>
- *
- */
-
-/**
- * @member LITE.configuration
  * @property {String} jQueryPath="js/jquery.min.js"
  * the path (relative to the LITE plugin.js file) to jQuery
- */
-
-/**
- * @member LITE.configuration
- * @property {Function} tooltipDisplay
- * A function that is given the change object and which returns a string to be displayed in the toolitp
  */
 
 /**
@@ -393,17 +355,7 @@ CKEDITOR.plugins.add('liter', {
     var path = this.path,
       // @ts-ignore
       plugin: any = new LITEPlugin(path),
-      liteConfig = CKEDITOR.tools.extend({}, ed.config.lite || {}),
-      ttConfig = liteConfig.tooltips;
-
-    if (undefined === ttConfig) {
-      ttConfig = true;
-    }
-
-    if (ttConfig === true) {
-      ttConfig = tooltipDefaults;
-    }
-    liteConfig.tooltips = ttConfig;
+      liteConfig = CKEDITOR.tools.extend({}, ed.config.lite || {});
 
     addPlugin(ed, plugin);
 
@@ -429,13 +381,6 @@ CKEDITOR.plugins.add('liter', {
       self = this,
       jQueryPath = liteConfig.jQueryPath || 'js/jquery.min.js',
       scripts: any[] = [];
-
-    if (!global[ttConfig.classPath]) {
-      var sources = ['opentip-adapter.js'];
-      for (var i = 0, len = sources.length; i < len; ++i) {
-        scripts.push(path + 'js/' + sources[i]);
-      }
-    }
 
     if (!jQueryLoaded) {
       scripts.splice(0, 0, this.path + jQueryPath);
@@ -566,11 +511,6 @@ LITEPlugin.prototype = {
         title: lang.REJECT_ONE,
         //					icon:"reject_one.png",
         readOnly: allow,
-      },
-      {
-        command: LITE.Commands.TOGGLE_TOOLTIPS,
-        exec: this._onToggleTooltips,
-        readOnly: true,
       },
     ];
 
@@ -975,10 +915,7 @@ LITEPlugin.prototype = {
     this._domLoaded = true;
     this._editor = evt.editor;
     var ed = this._editor.editable();
-    ed.attachListener(ed, 'mousedown', this._onMouseDown, this, null, 1);
     ed.attachListener(ed, 'keypress', this._onKeyPress, this, null, 1);
-    //TEMP
-    this._hideTooltip(); // clean up any leftover tooltip elements
     this._onReady();
   },
 
@@ -1007,10 +944,6 @@ LITEPlugin.prototype = {
     }
     if (cssPath !== false) {
       load(cssPath || options.defaultCssPath, '__lite__css__');
-    }
-
-    if (this._config.tooltips.cssPath) {
-      load(this._config.tooltips.cssPath, '__lite_tt_css__');
     }
   },
 
@@ -1051,8 +984,6 @@ LITEPlugin.prototype = {
       if (this._config.handlePaste) {
         e.on('paste', paste, null, null, 1);
       }
-      e.on('beforeGetData', this._onBeforeGetData.bind(this));
-      e.on('beforeUndoImage', this._onBeforeGetData.bind(this)); // treat before undo as before getdata
       e.on('insertHtml', paste, null, null, 1);
       e.on('insertText', paste, null, null, 1);
       e.on('insertElement', paste, null, null, 1);
@@ -1112,26 +1043,6 @@ LITEPlugin.prototype = {
       iceprops.hostMethods.logError = _logError;
     }
 
-    iceprops.tooltips = config.tooltips.show;
-    if (iceprops.tooltips) {
-      var hideTT = this._hideTooltip.bind(this);
-      iceprops.hostMethods.showTooltip = this._showTooltip.bind(this);
-      iceprops.hostMethods.hideTooltip = hideTT;
-      iceprops.hostMethods.beforeDelete = iceprops.hostMethods.beforeInsert = hideTT;
-      if (config.tooltips.classPath) {
-        try {
-          // @ts-ignore
-          this._tooltipsHandler = new global[config.tooltips.classPath]();
-          iceprops.tooltipsDelay = config.tooltips.delay;
-        } catch (e) {}
-        if (!this._tooltipsHandler) {
-          //@ts-ignore
-          _logError('Unable to create tooltip handler', config.tooltips.classPath);
-        } else {
-          this._tooltipsHandler.init(config.tooltips);
-        }
-      }
-    }
     jQuery.extend(iceprops, LITEConstants);
     // @ts-ignore todo: fix once converted the ice.js to ts
     this._tracker = new ice.InlineChangeEditor(iceprops);
@@ -1175,10 +1086,6 @@ LITEPlugin.prototype = {
   _onRejectOne: function(/*event */) {
     var node = this._tracker.currentChangeNode();
     return this.rejectChange(node);
-  },
-
-  _onToggleTooltips: function(/*event */) {
-    this._tracker && this._tracker.toggleTooltips();
   },
 
   /**
@@ -1263,26 +1170,12 @@ LITEPlugin.prototype = {
     }
   },
 
-  _onMouseDown: function(/*evt*/) {
-    this._hideTooltip();
-  },
-
-  /**
-   * Callback for the editor's beforeGetData event
-   * Remove tooltips from dom
-   * @private
-   */
-  _onBeforeGetData: function(/*evt*/) {
-    this._hideTooltip();
-  },
-
   /**
    * Callback for the editor's afterSetData event
    * Remove tooltips from dom
    * @private
    */
   _onAfterSetData: function(/*evt*/) {
-    this._hideTooltip();
     this._processContent();
     if (this._tracker /* && this._tracker.isTracking() */) {
       this._tracker.reload();
@@ -1675,69 +1568,6 @@ LITEPlugin.prototype = {
   },
 
   /**
-   * @ignore
-   * @param node
-   * @param change
-   */
-  _showTooltip: function(node: any, change: any) {
-    var config = this._config.tooltips;
-    if (config.events) {
-      return (
-        this._editor &&
-        this._editor.fire(LITE.Events.HOVER_IN, {
-          lite: this,
-          node: node,
-          changeId: change.changeId,
-        })
-      );
-    }
-    if (config.show) {
-      var title = this._makeTooltipTitle(change);
-      if (this._tooltipsHandler) {
-        this._tooltipsHandler.hideAll(this._getBody());
-        this._tooltipsHandler.showTooltip(node, title, this._editor.container.$);
-      } else {
-        node.setAttribute('title', title);
-      }
-    }
-  },
-
-  /**
-   * @ignore
-   * @param node
-   */
-  _hideTooltip: function(node: any) {
-    var config = this._config.tooltips;
-    if (config.events) {
-      return (
-        this._editor &&
-        this._editor.fire(LITE.Events.HOVER_OUT, {
-          lite: this,
-          node: node,
-        })
-      );
-    }
-    if (this._tooltipsHandler) {
-      if (node) {
-        this._tooltipsHandler.hideTooltip(node);
-      } else {
-        this._tooltipsHandler.hideAll(this._getBody());
-      }
-    } else {
-      if (this._tracker) {
-        if (node) {
-          node.removeAttribute('title');
-        } else {
-          var nodes = this._tracker.getIceNodes();
-          if (nodes) {
-            nodes.removeAttr('title');
-          }
-        }
-      }
-    }
-  },
-
-  /**
    * Copied from ckeditor
    * @ignore
    */
@@ -1751,20 +1581,7 @@ LITEPlugin.prototype = {
    */
   _afterInsert: function() {
     var editor = this._editor;
-
     editor.getSelection().scrollIntoView();
-    /*			setTimeout( function() {
-				editor.fire( 'saveSnapshot' );
-			}, 0 ); */
-  },
-
-  /**
-   * @ignore
-   * @param change
-   * @returns {Boolean}
-   */ _makeTooltipTitle: function(change: any) {
-    var createTooltipDisplay = this._config.tooltipDisplay || defaultTooltipDisplay;
-    return createTooltipDisplay(change, this._editor);
   },
 };
 

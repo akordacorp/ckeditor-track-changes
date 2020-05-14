@@ -192,16 +192,3 @@ export const getCommentEnd = (documentElement: HTMLElement, element: HTMLElement
   }
   return documentElement.querySelector(`.comment-end[data-w-id="${dataCid.slice(1)}"]`);
 };
-
-/**
- * We currently can encounter two different types of timestamps in a document (seconds and milliseconds) for tracked changes.
- * It's relatively safe to assume that any timestamp with greater than or equal to 13 digits is a millisecond timestamp,
- * and anything less is seconds.
- * @param timestamp Either a seconds or milliseconds based timestamp
- * @returns a milliseconds based timestamp
- */
-export const ensureMillsecondsTimestamp = (timestamp: number): number => {
-  const MILLISECOND_TIMESTAMP_DIGIT_COUNT = 13;
-  const timestampDigitCount = timestamp.toString().length;
-  return timestampDigitCount >= MILLISECOND_TIMESTAMP_DIGIT_COUNT ? timestamp : timestamp * 1000;
-};
