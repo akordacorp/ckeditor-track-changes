@@ -356,16 +356,6 @@ CKEDITOR.plugins.add('liter', {
       // @ts-ignore
       plugin: any = new LITEPlugin(path),
       liteConfig = CKEDITOR.tools.extend({}, ed.config.lite || {});
-    // ttConfig = liteConfig.tooltips;
-
-    // if (undefined === ttConfig) {
-    //   ttConfig = true;
-    // }
-
-    // if (ttConfig === true) {
-    //   ttConfig = tooltipDefaults;
-    // }
-    // liteConfig.tooltips = ttConfig;
 
     addPlugin(ed, plugin);
 
@@ -1186,7 +1176,6 @@ LITEPlugin.prototype = {
    * @private
    */
   _onAfterSetData: function(/*evt*/) {
-    // this._hideTooltip();
     this._processContent();
     if (this._tracker /* && this._tracker.isTracking() */) {
       this._tracker.reload();
