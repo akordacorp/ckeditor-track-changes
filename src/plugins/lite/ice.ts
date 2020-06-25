@@ -1189,6 +1189,10 @@ class InlineChangeEditor {
     }
   }
 
+  _removeUserStyle(userid: any) {
+    delete this._userStyles[userid];
+  }
+
   _addChange(ctnType: any, ctNodes: any, changeIdToUse: any) {
     var changeid = changeIdToUse || this.batchChangeId || this.getNewChangeId(),
       self = this;
@@ -2749,13 +2753,46 @@ class InlineChangeEditor {
     }
 
     var nodes = this.getIceNodes();
-    var f = function(_i: any, el: any) {
+
+    // Iterate across all of the changes and register all of the known user
+    // styles. This will allow us to switch the user styles so that the current user
+    // is always style #2 (blue)
+    var registerUserStyles = (i: any, el: any) => {
+      let index;
+      let styleName;
+      let styleIndex: any = 0;
+      const classList = el.classList;
+      var userid = el.getAttribute(this.attributes.userId);
+
+      for (index = 0; index < classList.length; index++) {
+        styleMatch = styleRegex.exec(classList[index]);
+        if (styleMatch) {
+          styleName = styleMatch[0];
+          styleIndex = styleMatch[1];
+        }
+      }
+
+      if (!styleIndex) {
+        styleName = this._getUserStyle(userid);
+        const match = styleRegex.exec(styleName);
+        if (match) {
+          styleIndex = match[1];
+          el.classList.add(styleName);
+        }
+      }
+
+      this._setUserStyle(userid, Number(styleIndex));
+    };
+
+    // Registers all of the changes
+    var registerChanges = (_i: any, el: any) => {
+      let isMyChange = false;
       var styleIndex: any = 0,
         styleName,
-        ctnType = '',
+        ctnType: any = '',
         index,
         classList = el.className.split(' ');
-      //TODO optimize this - create a map of regexp
+
       for (index = 0; index < classList.length; index++) {
         styleMatch = styleRegex.exec(classList[index]);
         if (styleMatch) {
@@ -2764,46 +2801,69 @@ class InlineChangeEditor {
         }
         var ctnReg = new RegExp('(' + changeTypeClasses.join('|') + ')').exec(classList[index]);
         if (ctnReg) {
-          // @ts-ignore
           ctnType = this._getChangeTypeFromAlias(ctnReg[1]);
         }
       }
-      // @ts-ignore
       var userid = el.getAttribute(this.attributes.userId);
       var userName;
       if (myUserId && userid === myUserId) {
+        isMyChange = true;
         userName = myUserName;
-        // @ts-ignore
         el.setAttribute(this.attributes.userName, myUserName);
       } else {
-        // @ts-ignore
         userName = el.getAttribute(this.attributes.userName);
       }
-      // @ts-ignore
-      this._setUserStyle(userid, Number(styleIndex));
-      // @ts-ignore
+
+      // We want to adjust the user styles so that the current user is always style #2 (blue)
+      // If the change is my own
+      if (isMyChange) {
+        // check if the style is not 2
+        if (styleIndex !== '2') {
+          // and make it number 2, if it's not
+          el.classList.remove(styleName);
+          this._setUserStyle(userid, 2);
+          styleName = `${this.stylePrefix}-2`;
+          el.classList.add(styleName);
+          // reset the unique styles index to zero so we can recapture
+          // the style that I originally had
+          this._uniqueStyleIndex = 0;
+          delete this._styles[Number(styleIndex)];
+        }
+      } else {
+        // if the change is not mind, but has #2, we wan to change it to something else
+        if (styleIndex === '2') {
+          // first grab the user's registered style, since it may have already changed
+          const userStyleName = this._getUserStyle(userid);
+          // if it has already changed, use the user's new style
+          if (userStyleName !== styleName) {
+            el.classList.remove(styleName);
+            el.classList.add(userStyleName);
+            styleName = userStyleName;
+          } else {
+            // otherwise, remove the user's style and register a new one via _getUserStyle
+            el.classList.remove(styleName);
+            this._removeUserStyle(userid);
+            styleName = this._getUserStyle(userid);
+            el.classList.add(styleName);
+          }
+        }
+      }
+
       var changeid = parseInt(el.getAttribute(this.attributes.changeId) || '');
       if (isNaN(changeid)) {
-        // @ts-ignore
         changeid = this.getNewChangeId();
-        // @ts-ignore
         el.setAttribute(this.attributes.changeId, changeid);
       }
-      // @ts-ignore
       var timeStamp = parseInt(el.getAttribute(this.attributes.time) || '');
       if (isNaN(timeStamp)) {
         timeStamp = now;
       }
-      // @ts-ignore
       var lastTimeStamp = parseInt(el.getAttribute(this.attributes.lastTime) || '');
       if (isNaN(lastTimeStamp)) {
         lastTimeStamp = timeStamp;
       }
-      // @ts-ignore
       var sessionId = el.getAttribute(this.attributes.sessionId);
-      // @ts-ignore
       var changeData = el.getAttribute(this.attributes.changeData) || '';
-      // @ts-ignore
       this._changes[changeid] = {
         type: ctnType,
         style: styleName,
@@ -2814,9 +2874,10 @@ class InlineChangeEditor {
         sessionId: sessionId,
         data: changeData,
       };
-      // @ts-ignore
-    }.bind(this);
-    nodes.each(f);
+    };
+    nodes.each(registerUserStyles);
+    nodes.each(registerChanges);
+    this._setUserStyle(myUserId, 2);
     this._triggerChange();
   }
 
