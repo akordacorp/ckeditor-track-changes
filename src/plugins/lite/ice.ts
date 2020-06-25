@@ -2814,15 +2814,15 @@ class InlineChangeEditor {
         userName = el.getAttribute(this.attributes.userName);
       }
 
-      // We want to adjust the user styles so that the current user is always style #2 (blue)
+      // We want to adjust the user styles so that the current user is always style #0
       // If the change is my own
       if (isMyChange) {
-        // check if the style is not 2
-        if (styleIndex !== '2') {
-          // and make it number 2, if it's not
+        // check if the style is not 0
+        if (styleIndex !== '0') {
+          // and make it number 0, if it's not
           el.classList.remove(styleName);
-          this._setUserStyle(userid, 2);
-          styleName = `${this.stylePrefix}-2`;
+          this._setUserStyle(userid, 0);
+          styleName = `${this.stylePrefix}-0`;
           el.classList.add(styleName);
           // reset the unique styles index to zero so we can recapture
           // the style that I originally had
@@ -2830,8 +2830,8 @@ class InlineChangeEditor {
           delete this._styles[Number(styleIndex)];
         }
       } else {
-        // if the change is not mind, but has #2, we wan to change it to something else
-        if (styleIndex === '2') {
+        // if the change is not mind, but has #0, we wan to change it to something else
+        if (styleIndex === '0') {
           // first grab the user's registered style, since it may have already changed
           const userStyleName = this._getUserStyle(userid);
           // if it has already changed, use the user's new style
@@ -2877,7 +2877,7 @@ class InlineChangeEditor {
     };
     nodes.each(registerUserStyles);
     nodes.each(registerChanges);
-    this._setUserStyle(myUserId, 2);
+    this._setUserStyle(myUserId, 0);
     this._triggerChange();
   }
 
