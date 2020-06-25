@@ -35,3 +35,4 @@ yarn-error.log*
 .env
 
 src/plugins/**/*.js
+src/plugins/**/plugin.css

@@ -1,0 +1,52 @@
+/**
+ A mixin that creates the selectors/properties for a tracked change style (e.g., user with style ID "0" gets blue text)
+**/
+@mixin trackedChangeStyle($styleId, $color) {
+  .ice-ins.ice-cts-#{$styleId} {
+    border-bottom: 1px solid $color;
+  }
+
+  .ice-ins.ice-cts-#{$styleId},
+  .ice-ins.ice-cts-#{$styleId} *,
+  .cont-cts-#{$styleId},
+  .ice-del.ice-cts-#{$styleId},
+  .ice-del.ice-cts-#{$styleId} * {
+    color: $color;
+  }
+}
+
+ins,
+del {
+  text-decoration: none !important;
+  white-space: pre-wrap;
+}
+
+del.ice-del {
+  display: none;
+}
+
+ins.ice-no-decoration,
+del.ice-no-decoration {
+  text-decoration: none !important;
+}
+
+.ICE-Tracking {
+  .ice-ins,
+  .ice-del {
+    color: #000;
+    cursor: text;
+  }
+
+  .ice-del {
+    display: inline;
+    text-decoration: line-through !important;
+  }
+
+  @include trackedChangeStyle('0', #0174ca);
+  @include trackedChangeStyle('1', #e3495d);
+  @include trackedChangeStyle('2', #f000ff);
+  @include trackedChangeStyle('3', #f3b83b);
+  @include trackedChangeStyle('4', #51af46);
+  @include trackedChangeStyle('5', #61dafb);
+  @include trackedChangeStyle('6', #c87022);
+}

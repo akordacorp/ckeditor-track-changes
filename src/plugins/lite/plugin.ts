@@ -974,7 +974,7 @@ LITEPlugin.prototype = {
       config = this._config,
       debug = (config && config.debug) || {};
 
-    this._loadCSS(doc, { cssPath: config.cssPath, defaultCssPath: 'css/lite.css' });
+    this._loadCSS(doc, { cssPath: config.cssPath, defaultCssPath: 'css/plugin.css' });
 
     if (!this._eventsBounds) {
       this._eventsBounds = true;

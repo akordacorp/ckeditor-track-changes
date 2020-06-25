@@ -2,7 +2,7 @@ import React from 'react';
 import './App.css';
 import CKEditor from 'ckeditor4-react';
 
-let userName = 'Augustus Gloop';
+let userName = 'Leroy Jenkins';
 
 const App: React.FC = () => {
   return (

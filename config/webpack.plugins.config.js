@@ -2,12 +2,13 @@ const path = require('path');
 const find = require('find');
 const paths = require('../config/paths');
 const chalk = require('react-dev-utils/chalk');
+var OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 
 const pluginConfigs = [];
 
 function createPluginConfig(pluginFile, mode = 'production') {
   return {
-    entry: pluginFile,
+    entry: [pluginFile, pluginFile.replace('.ts', '.scss')],
     output: {
       path: pluginFile.replace('/plugin.ts', ''),
       filename: 'plugin.js',
@@ -49,6 +50,38 @@ function createPluginConfig(pluginFile, mode = 'production') {
             },
           ],
         },
+        {
+          test: /\.scss$/,
+          use: [
+            {
+              loader: 'file-loader',
+              options: {
+                name: 'css/plugin.css',
+              },
+            },
+            {
+              loader: 'extract-loader',
+            },
+            {
+              loader: 'css-loader?-url',
+            },
+            {
+              loader: 'postcss-loader',
+            },
+            {
+              loader: 'sass-loader',
+            },
+          ],
+        },
+      ],
+    },
+    optimization: {
+      minimizer: [
+        new OptimizeCSSAssetsPlugin({
+          cssProcessorPluginOptions: {
+            preset: ['default', { discardComments: { removeAll: true } }],
+          },
+        }),
       ],
     },
   };
