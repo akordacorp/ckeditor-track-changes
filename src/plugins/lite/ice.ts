@@ -2742,7 +2742,7 @@ class InlineChangeEditor {
     this._uniqueStyleIndex = 0;
     this._uniqueIDIndex = 1;
     var myUserId = this.currentUser && this.currentUser.id,
-      myUserName = (this.currentUser && this.currentUser.name) || '',
+      myUserName = (this.currentUser && this.currentUser.id) || '',
       now = new Date().getTime(),
       styleMatch,
       styleRegex = new RegExp(this.stylePrefix + '-(\\d+)'),
@@ -2805,13 +2805,18 @@ class InlineChangeEditor {
         }
       }
       var userid = el.getAttribute(this.attributes.userId);
-      var userName;
+      var userName = el.getAttribute(this.attributes.userName);
+
+      // if the user name is mine, but the userid is not, update userid;
+      // we do this for a transition to userName as the primary identifier
+      if (myUserName && myUserName === userName && userid !== myUserId) {
+        el.setAttribute(this.attributes.userId, myUserName);
+        userid = myUserId;
+      }
+
       if (myUserId && userid === myUserId) {
         isMyChange = true;
-        userName = myUserName;
         el.setAttribute(this.attributes.userName, myUserName);
-      } else {
-        userName = el.getAttribute(this.attributes.userName);
       }
 
       // We want to adjust the user styles so that the current user is always style #0
