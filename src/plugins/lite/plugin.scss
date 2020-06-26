@@ -13,6 +13,16 @@
   .ice-del.ice-cts-#{$styleId} * {
     color: $color;
   }
+
+  b,
+  u,
+  i,
+  span {
+    &.nsc-formatting.nsc-cts-#{$styleId},
+    &.nsc-formatting.nsc-cts-#{$styleId} * {
+      color: $color;
+    }
+  }
 }
 
 ins,

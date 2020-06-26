@@ -97,6 +97,7 @@ const LITE = {
       REJECT_ALL: 'lite-rejectall',
       ACCEPT_ONE: 'lite-acceptone',
       REJECT_ONE: 'lite-rejectone',
+      REVERT_MY_CHANGE: 'lite-revert-my-change',
     },
   },
   LITEConstants = {
@@ -474,42 +475,42 @@ LITEPlugin.prototype = {
         command: LITE.Commands.TOGGLE_TRACKING,
         exec: this._onToggleTracking,
         title: lang.TOGGLE_TRACKING,
-        //					icon: "track_changes_on_off.png",
         trackingOnly: false,
       },
       {
         command: LITE.Commands.TOGGLE_SHOW,
         exec: this._onToggleShow,
         title: lang.TOGGLE_SHOW,
-        //					icon: "show_hide.png",
         readOnly: true,
       },
       {
         command: LITE.Commands.ACCEPT_ALL,
         exec: this._onAcceptAll,
         title: lang.ACCEPT_ALL,
-        //					icon:"accept_all.png",
         readOnly: allow,
       },
       {
         command: LITE.Commands.REJECT_ALL,
         exec: this._onRejectAll,
         title: lang.REJECT_ALL,
-        //					icon:"reject_all.png",
         readOnly: allow,
       },
       {
         command: LITE.Commands.ACCEPT_ONE,
         exec: this._onAcceptOne,
         title: lang.ACCEPT_ONE,
-        //					icon:"accept_one.png",
         readOnly: allow,
       },
       {
         command: LITE.Commands.REJECT_ONE,
         exec: this._onRejectOne,
         title: lang.REJECT_ONE,
-        //					icon:"reject_one.png",
+        readOnly: allow,
+      },
+      {
+        command: LITE.Commands.REVERT_MY_CHANGE,
+        exec: this._onRevertMyChange,
+        title: 'Revert',
         readOnly: allow,
       },
     ];
@@ -540,6 +541,7 @@ LITEPlugin.prototype = {
       LITE.Commands.REJECT_ALL,
       LITE.Commands.ACCEPT_ONE,
       LITE.Commands.REJECT_ONE,
+      LITE.Commands.REVERT_MY_CHANGE,
     ];
 
     var self: any = this;
@@ -573,39 +575,34 @@ LITEPlugin.prototype = {
       if (ed.addMenuItems) {
         ed.addMenuGroup('lite', 50);
         var params: any = {};
-        if (commands.indexOf(LITE.Commands.ACCEPT_ONE) >= 0) {
-          params[LITE.Commands.ACCEPT_ONE] = {
-            label: lang.ACCEPT_ONE,
-            command: LITE.Commands.ACCEPT_ONE,
+        if (commands.indexOf(LITE.Commands.REVERT_MY_CHANGE) >= 0) {
+          params[LITE.Commands.REVERT_MY_CHANGE] = {
+            label: lang.REVERT_MY_CHANGE,
+            command: LITE.Commands.REVERT_MY_CHANGE,
             group: 'lite',
             order: 1,
-          };
-        }
-        if (commands.indexOf(LITE.Commands.REJECT_ONE) >= 0) {
-          params[LITE.Commands.REJECT_ONE] = {
-            label: lang.REJECT_ONE,
-            command: LITE.Commands.REJECT_ONE,
-            group: 'lite',
-            order: 2,
           };
         }
         ed.addMenuItems(params);
       }
 
       if (ed.contextMenu) {
-        ed.contextMenu.addListener(
-          function(element: any /*, selection */) {
-            // @ts-ignore
-            if (element && this._tracker && this._tracker.currentChangeNode(element)) {
-              var ret: any = {};
-              ret[LITE.Commands.ACCEPT_ONE] = CKEDITOR.TRISTATE_OFF;
-              ret[LITE.Commands.REJECT_ONE] = CKEDITOR.TRISTATE_OFF;
-              return ret;
-            } else {
-              return null;
+        ed.contextMenu.addListener((element: any) => {
+          const currentChangeNode =
+            element && this._tracker && this._tracker.currentChangeNode(element);
+          if (!!currentChangeNode) {
+            const changeElement = new CKEDITOR.dom.element(currentChangeNode);
+            var ret: any = {};
+            // if this is "my" change (i.e., the current user's change), we can add the "REVERT" option for the user so that they
+            // can revert any <ins/> and <del/> they created.
+            if (this._isMyTrackedChange(changeElement)) {
+              ret[LITE.Commands.REVERT_MY_CHANGE] = CKEDITOR.TRISTATE_OFF;
             }
-          }.bind(this)
-        );
+            return ret;
+          } else {
+            return null;
+          }
+        });
       }
     }
   },
@@ -1086,6 +1083,89 @@ LITEPlugin.prototype = {
   _onRejectOne: function(/*event */) {
     var node = this._tracker.currentChangeNode();
     return this.rejectChange(node);
+  },
+
+  /**
+   * Reverts the current user's (my) tracked change. This can produce a couple of different results
+   * depending on the context.
+   *
+   * If the change is an <ins>, then revert will remove the insert along with all of the content, but without
+   * leaving any additional tracked change elements.
+   *
+   * If the change is a <del>, then we have two scenarios to account for.
+   *
+   * (1) The <del>eted content may have been part of another user's <ins/>ert originally, in which case we want to revert back to
+   * an insert (<ins/>) with the original insert attributes.
+   * (2) If the delete was not from an insert, then it is just a plain delete of original content, in which case we just want to
+   * return the original content without any tracked change elements.
+   *
+   */
+  _onRevertMyChange: function(editor: any) {
+    const selection = editor.getSelection();
+    const startElement = !!selection && selection.getStartElement();
+    if (!!startElement) {
+      var node = this._tracker.currentChangeNode(startElement.$);
+      if (!!node) {
+        const changeElement = new CKEDITOR.dom.element(node);
+        if (this._isMyTrackedChange(changeElement)) {
+          // if this is a tracked change (by me) and it's an insert, just remove it
+          if (this._isInsert(changeElement)) {
+            changeElement.remove();
+          } else if (this._isDelete(changeElement)) {
+            // If we're reverting a delete, let's check to see if we have the revert-info,
+            // which means this was originally an insert that got deleted. In that case, we want to
+            // convert back to an insert w/ most of the original attributes (revert-info).
+            const revertInfo = changeElement.getAttribute('data-akorda-revert-info');
+            if (!!revertInfo) {
+              let insertAttributes;
+              try {
+                // parse the revert-info JSON into a js object
+                insertAttributes = JSON.parse(revertInfo);
+              } catch (e) {
+                console.warn('Could not parse akorda revert information:', revertInfo);
+              }
+              if (!!insertAttributes) {
+                // Create a new <ins> element
+                const insertElement = new CKEDITOR.dom.element(
+                  this._tracker._createIceNode('insertType')
+                );
+                // copy over the html from the delete and set the attributes
+                insertElement.setHtml(changeElement.getHtml());
+                insertElement.setAttributes(insertAttributes);
+                // add the new ins to the dom and delete the old del
+                insertElement.insertBefore(changeElement);
+                changeElement.remove();
+              }
+            } else {
+              // if this is a revert of a delete with no revert-info (i.e., not a delete of ins content),
+              // just remove the <del> element but keep the child content.
+              changeElement.remove(true);
+            }
+          }
+        }
+      }
+    }
+  },
+
+  _isInsert: function(element: any) {
+    return !!element && element.getName() === 'ins';
+  },
+
+  _isDelete: function(element: any) {
+    return !!element && element.getName() === 'del';
+  },
+
+  _isTrackedChange: function(element: any) {
+    return this._isInsert(element) || this._isDelete(element);
+  },
+
+  _isMyTrackedChange: function(element: any) {
+    let isMyTrackedChange = false;
+    if (this._isTrackedChange(element)) {
+      const changeUserId = element.getAttribute(this._tracker.attributes.userId);
+      isMyTrackedChange = !!changeUserId && changeUserId === this._config.userId;
+    }
+    return isMyTrackedChange;
   },
 
   /**
