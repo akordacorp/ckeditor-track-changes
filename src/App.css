@@ -12,8 +12,17 @@
   border: 1px solid lightgray;
 }
 
+.App .cke_contents,
+.App .cke_inner {
+  height: 100% !important;
+}
+
+.App .cke {
+  height: 80%;
+}
+
 .akorda-ui-editor,
 .akorda-ui-editor > .cke,
 .akorda-ui-editor > .cke > .cke_inner {
-  height: 300px !important;
+  height: 900px !important;
 }

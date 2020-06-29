@@ -2,6 +2,8 @@ import React from 'react';
 import './App.css';
 import CKEditor from 'ckeditor4-react';
 
+let userName = 'Veruca Salt';
+
 const App: React.FC = () => {
   return (
     <div className="App">
@@ -10,17 +12,45 @@ const App: React.FC = () => {
           allowedContent: true,
           extraPlugins: 'liter',
           lite: {
-            userId: 191,
-            userName: 'Matt Meiske',
+            userId: userName,
+            userName,
+            debug: { log: true },
           },
         }}
         data={`<div>
         <p>
-        <ins data-id="1" class="ice-ins ice-cts-2"><span>The quick <b>brown</b> fox <i>jumps</i> over the lazy dog</span></ins>
+          Leroy Jenkins: <ins data-id="1" class="ice-ins ice-cts-0" data-username="Leroy Jenkins" data-userid="Leroy Jenkins"><span>The quick <b>brown</b> fox <i>jumps</i> over the lazy dog</span></ins>
+        </p>
+
+        <p>
+          Augustus Gloop: <ins data-id="2" class="ice-ins ice-cts-1" data-username="Augustus Gloop" data-userid="Augustus Gloop"><span>The quick <b>brown</b> fox <i>jumps</i> over the lazy dog</span></ins>
         </p>
         <p>
-          Text before ins <ins data-id="1" class="ice-ins ice-cts-2"><span data-last-name="meiske">The comment starts here→<span data-w-id="1" data-track-changes-ignore="true" cke-editable="false" unselectable="true" contenteditable="false" start="true" class="comment-marker comment-start"></span><span data-c-id="s1 " class="marker-comment" removable="true">I am a comment</span><img data-c-id="i1" class="marker-image" src="/assets/src/media/img/font-comment.png?440e7fee" data-track-changes-ignore="true" data-cke-real-element-type="annotation" cke-editable="false" contenteditable="false"><span data-w-id="1" data-track-changes-ignore="true" cke-editable="false" contenteditable="false" end="true" class="comment-end comment-marker"></span>←and ends there.</span></ins> Text after ins
+          Augustus Gloop: <del data-id="8" class="ice-del ice-cts-1" data-username="Augustus Gloop" data-userid="Augustus Gloop"><span>The quick <b>brown</b> fox <i>jumps</i> over the lazy dog</span></del>
         </p>
+        <p>
+          Violet Beauregarde: <ins data-id="3" class="ice-ins ice-cts-2" data-username="Violet Beauregarde" data-userid="Violet Beauregarde"><span>The quick <b>brown</b> fox <i>jumps</i> over the lazy dog</span></ins>
+        </p>
+        <p>
+        Violet Beauregarde: <del data-id="6" class="ice-del ice-cts-2" data-username="Violet Beauregarde" data-userid="Violet Beauregarde"><span>The quick <b>brown</b> fox <i>jumps</i> over the lazy dog</span></del>
+      </p>
+        <p>
+          Veruca Salt: <ins data-id="4" class="ice-ins ice-cts-3" data-username="Veruca Salt" data-userid="Veruca Salt"><span>The quick <b>brown</b> fox <i>jumps</i> over the lazy dog</span></ins>
+        </p>
+        <p>
+          Mike Teevee: <ins data-id="9" class="ice-ins ice-cts-4" data-username="Mike Teevee" data-userid="Mike Teevee"><span>The quick <b>brown</b> fox <i>jumps</i> over the lazy dog</span></ins>
+        </p>
+
+        <p>
+          Veruca Salt: <del data-id="7" class="ice-del ice-cts-3" data-username="Veruca Salt" data-userid="Veruca Salt"><span>The quick <b>brown</b> fox <i>jumps</i> over the lazy dog</span></del>
+        </p>
+        <p>
+          Mike Teevee: <del data-id="10" class="ice-del ice-cts-4" data-username="Mike Teevee" data-userid="Mike Teevee"><span>The quick <b>brown</b> fox <i>jumps</i> over the lazy dog</span></del>
+        </p>
+        <p>
+          Leroy Jenkins: <del data-id="5" class="ice-del ice-cts-0" data-username="Leroy Jenkins" data-userid="Leroy Jenkins"><span>The quick <b>brown</b> fox <i>jumps</i> over the lazy dog</span></del>
+        </p>
+
       <div>`}
         onBeforeLoad={(CKEDITOR: any) => {
           CKEDITOR.disableAutoInline = true;
@@ -32,6 +62,16 @@ const App: React.FC = () => {
           CKEDITOR.dtd.$removeEmpty.ol = 0;
           CKEDITOR.dtd.$removeEmpty.ul = 0;
           CKEDITOR.dtd.$removeEmpty.p = 0;
+        }}
+        onInstanceReady={(evt: any) => {
+          evt.editor.on('lite:init', (evt: any) => {
+            // const lite = evt.data.lite;
+            // lite.startNewSession();
+          });
+
+          evt.editor.on('lite:change', (evt: any) => {
+            console.log('change', evt.data);
+          });
         }}
       />
     </div>

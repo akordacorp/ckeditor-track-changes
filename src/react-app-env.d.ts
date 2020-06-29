@@ -81,4 +81,3 @@ declare module '*.html' {
 declare var CKEDITOR: any;
 declare var jQuery: any;
 declare module 'rangy';
-declare module 'opentip';

@@ -20,9 +20,10 @@ const buildPlugins = require('../../scripts/plugins');
 
 // Regex that will match the *js* files emitted from webpack build of ckeditor typescript plugin
 const pluginRegex = /.*src\/plugins\/.*plugin\.js$/;
+const cssRegex = /.*src\/plugins\/.*css\/plugin\.css$/;
 // Function that will return if the file provided does NOT match the regex (i.e., is not an emitted file)
 const isNotCKEditorPluginJS = file => {
-  return !pluginRegex.test(file);
+  return !pluginRegex.test(file) && !cssRegex.test(file);
 };
 
 class BuildCKEditorPlugins {
