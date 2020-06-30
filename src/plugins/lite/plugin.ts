@@ -113,6 +113,7 @@ const LITE = {
       changeData: 'data-changedata',
       time: 'data-time',
       lastTime: 'data-last-change-time',
+      revertInfo: 'data-akorda-revert-info',
     },
     stylePrefix: 'ice-cts',
     preserveOnPaste: 'p',
@@ -1086,19 +1087,42 @@ LITEPlugin.prototype = {
   },
 
   /**
+   * Reverts a change element (ins/del) using the revert-info attribute, which contains a serialized
+   * form of the previous change elements attributes.
+   */
+  _revertFromInfo: function(changeElement: any) {
+    // find the revert info attribute which contains a serialized version of the previous change
+    const revertInfo = changeElement.getAttribute(LITEConstants.attributes.revertInfo);
+    if (!!revertInfo) {
+      let attrs;
+      try {
+        // parse the revert-info JSON into a js object
+        attrs = JSON.parse(revertInfo);
+      } catch (e) {
+        console.warn('Could not parse akorda revert information:', revertInfo);
+      }
+      if (!!attrs) {
+        // Create a new change element that is the inverse of the current change element
+        const changeType = this._isInsert(changeElement) ? 'deleteType' : 'insertType';
+        const revertToElement = new CKEDITOR.dom.element(this._tracker._createIceNode(changeType));
+        // copy over the html from the delete and set the attributes
+        revertToElement.setHtml(changeElement.getHtml());
+        revertToElement.setAttributes(attrs);
+        // add the new ins to the dom and delete the old del
+        revertToElement.insertBefore(changeElement);
+        changeElement.remove();
+      }
+    }
+  },
+
+  /**
    * Reverts the current user's (my) tracked change. This can produce a couple of different results
    * depending on the context.
    *
-   * If the change is an <ins>, then revert will remove the insert along with all of the content, but without
-   * leaving any additional tracked change elements.
+   * If the change is an ins/del with a revert-info attribute, then we know we need to revert to a previous change element,
+   * using the attributes serialized into the revert-info attribute.
    *
-   * If the change is a <del>, then we have two scenarios to account for.
-   *
-   * (1) The <del>eted content may have been part of another user's <ins/>ert originally, in which case we want to revert back to
-   * an insert (<ins/>) with the original insert attributes.
-   * (2) If the delete was not from an insert, then it is just a plain delete of original content, in which case we just want to
-   * return the original content without any tracked change elements.
-   *
+   * Otherwise, we will remove the tracked change element altogether, keeping the content if it we are reverting a <del>
    */
   _onRevertMyChange: function(editor: any) {
     const selection = editor.getSelection();
@@ -1108,39 +1132,12 @@ LITEPlugin.prototype = {
       if (!!node) {
         const changeElement = new CKEDITOR.dom.element(node);
         if (this._isMyTrackedChange(changeElement)) {
-          // if this is a tracked change (by me) and it's an insert, just remove it
-          if (this._isInsert(changeElement)) {
-            changeElement.remove();
-          } else if (this._isDelete(changeElement)) {
-            // If we're reverting a delete, let's check to see if we have the revert-info,
-            // which means this was originally an insert that got deleted. In that case, we want to
-            // convert back to an insert w/ most of the original attributes (revert-info).
-            const revertInfo = changeElement.getAttribute('data-akorda-revert-info');
-            if (!!revertInfo) {
-              let insertAttributes;
-              try {
-                // parse the revert-info JSON into a js object
-                insertAttributes = JSON.parse(revertInfo);
-              } catch (e) {
-                console.warn('Could not parse akorda revert information:', revertInfo);
-              }
-              if (!!insertAttributes) {
-                // Create a new <ins> element
-                const insertElement = new CKEDITOR.dom.element(
-                  this._tracker._createIceNode('insertType')
-                );
-                // copy over the html from the delete and set the attributes
-                insertElement.setHtml(changeElement.getHtml());
-                insertElement.setAttributes(insertAttributes);
-                // add the new ins to the dom and delete the old del
-                insertElement.insertBefore(changeElement);
-                changeElement.remove();
-              }
-            } else {
-              // if this is a revert of a delete with no revert-info (i.e., not a delete of ins content),
-              // just remove the <del> element but keep the child content.
-              changeElement.remove(true);
-            }
+          if (changeElement.hasAttribute(LITEConstants.attributes.revertInfo)) {
+            this._revertFromInfo(changeElement);
+          } else {
+            // if there's no revert info, then we'll remove the element altogether, but will
+            // keep the children if it was a <del> so that we retain the content on revert.
+            changeElement.remove(this._isDelete(changeElement));
           }
         }
       }
