@@ -2185,7 +2185,7 @@ class InlineChangeEditor {
 
       // When deleting inside another user's insert, we want to retain the original insert
       // details so that we can revert (cf REVERT_MY_CHANGE command)
-      const insertAttributes = new CKEDITOR.dom.element(contentAddNode).getAttributes(['data-id']);
+      const insertAttributes = new CKEDITOR.dom.element(contentAddNode).getAttributes();
       ctNode.dataset.akordaRevertInfo = JSON.stringify(insertAttributes);
 
       parent.removeChild(contentNode);
