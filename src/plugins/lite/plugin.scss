@@ -7,10 +7,8 @@
   }
 
   .ice-ins.ice-cts-#{$styleId},
-  .ice-ins.ice-cts-#{$styleId} *,
   .cont-cts-#{$styleId},
-  .ice-del.ice-cts-#{$styleId},
-  .ice-del.ice-cts-#{$styleId} * {
+  .ice-del.ice-cts-#{$styleId} {
     color: $color;
   }
 
@@ -54,9 +52,9 @@ del.ice-no-decoration {
 
   @include trackedChangeStyle('0', #0174ca);
   @include trackedChangeStyle('1', #e3495d);
-  @include trackedChangeStyle('2', #f000ff);
-  @include trackedChangeStyle('3', #f3b83b);
-  @include trackedChangeStyle('4', #51af46);
-  @include trackedChangeStyle('5', #61dafb);
-  @include trackedChangeStyle('6', #c87022);
+  @include trackedChangeStyle('2', #51af46);
+  @include trackedChangeStyle('3', #61dafb);
+  @include trackedChangeStyle('4', #c87022);
+  @include trackedChangeStyle('5', #f3b83b);
+  @include trackedChangeStyle('6', #f000ff);
 }
