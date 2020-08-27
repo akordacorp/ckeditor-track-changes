@@ -97,7 +97,6 @@ const LITE = {
       REJECT_ALL: 'lite-rejectall',
       ACCEPT_ONE: 'lite-acceptone',
       REJECT_ONE: 'lite-rejectone',
-      REVERT_MY_CHANGE: 'lite-revert-my-change',
     },
   },
   LITEConstants = {
@@ -508,12 +507,6 @@ LITEPlugin.prototype = {
         title: lang.REJECT_ONE,
         readOnly: allow,
       },
-      {
-        command: LITE.Commands.REVERT_MY_CHANGE,
-        exec: this._onRevertMyChange,
-        title: 'Revert',
-        readOnly: allow,
-      },
     ];
 
     this._isTracking = config.isTracking !== false; // user preference for tracking state
@@ -542,7 +535,6 @@ LITEPlugin.prototype = {
       LITE.Commands.REJECT_ALL,
       LITE.Commands.ACCEPT_ONE,
       LITE.Commands.REJECT_ONE,
-      LITE.Commands.REVERT_MY_CHANGE,
     ];
 
     var self: any = this;
@@ -570,41 +562,6 @@ LITEPlugin.prototype = {
 
     for (var i = 0, len = commandsMap.length; i < len; ++i) {
       add1(commandsMap[i]);
-    }
-
-    if (config.contextMenu !== false) {
-      if (ed.addMenuItems) {
-        ed.addMenuGroup('lite', 50);
-        var params: any = {};
-        if (commands.indexOf(LITE.Commands.REVERT_MY_CHANGE) >= 0) {
-          params[LITE.Commands.REVERT_MY_CHANGE] = {
-            label: lang.REVERT_MY_CHANGE,
-            command: LITE.Commands.REVERT_MY_CHANGE,
-            group: 'lite',
-            order: 1,
-          };
-        }
-        ed.addMenuItems(params);
-      }
-
-      if (ed.contextMenu) {
-        ed.contextMenu.addListener((element: any) => {
-          const currentChangeNode =
-            element && this._tracker && this._tracker.currentChangeNode(element);
-          if (!!currentChangeNode) {
-            const changeElement = new CKEDITOR.dom.element(currentChangeNode);
-            var ret: any = {};
-            // if this is "my" change (i.e., the current user's change), we can add the "REVERT" option for the user so that they
-            // can revert any <ins/> and <del/> they created.
-            if (this._isMyTrackedChange(changeElement)) {
-              ret[LITE.Commands.REVERT_MY_CHANGE] = CKEDITOR.TRISTATE_OFF;
-            }
-            return ret;
-          } else {
-            return null;
-          }
-        });
-      }
     }
   },
 
@@ -1084,64 +1041,6 @@ LITEPlugin.prototype = {
   _onRejectOne: function(/*event */) {
     var node = this._tracker.currentChangeNode();
     return this.rejectChange(node);
-  },
-
-  /**
-   * Reverts a change element (ins/del) using the revert-info attribute, which contains a serialized
-   * form of the previous change elements attributes.
-   */
-  _revertFromInfo: function(changeElement: any) {
-    // find the revert info attribute which contains a serialized version of the previous change
-    const revertInfo = changeElement.getAttribute(LITEConstants.attributes.revertInfo);
-    if (!!revertInfo) {
-      let attrs;
-      try {
-        // parse the revert-info JSON into a js object
-        attrs = JSON.parse(revertInfo);
-      } catch (e) {
-        console.warn('Could not parse akorda revert information:', revertInfo);
-      }
-      if (!!attrs) {
-        // Create a new change element that is the inverse of the current change element
-        const changeType = this._isInsert(changeElement) ? 'deleteType' : 'insertType';
-        const revertToElement = new CKEDITOR.dom.element(this._tracker._createIceNode(changeType));
-        // copy over the html from the delete and set the attributes
-        revertToElement.setHtml(changeElement.getHtml());
-        revertToElement.setAttributes(attrs);
-        // add the new ins to the dom and delete the old del
-        revertToElement.insertBefore(changeElement);
-        changeElement.remove();
-      }
-    }
-  },
-
-  /**
-   * Reverts the current user's (my) tracked change. This can produce a couple of different results
-   * depending on the context.
-   *
-   * If the change is an ins/del with a revert-info attribute, then we know we need to revert to a previous change element,
-   * using the attributes serialized into the revert-info attribute.
-   *
-   * Otherwise, we will remove the tracked change element altogether, keeping the content if it we are reverting a <del>
-   */
-  _onRevertMyChange: function(editor: any) {
-    const selection = editor.getSelection();
-    const startElement = !!selection && selection.getStartElement();
-    if (!!startElement) {
-      var node = this._tracker.currentChangeNode(startElement.$);
-      if (!!node) {
-        const changeElement = new CKEDITOR.dom.element(node);
-        if (this._isMyTrackedChange(changeElement)) {
-          if (changeElement.hasAttribute(LITEConstants.attributes.revertInfo)) {
-            this._revertFromInfo(changeElement);
-          } else {
-            // if there's no revert info, then we'll remove the element altogether, but will
-            // keep the children if it was a <del> so that we retain the content on revert.
-            changeElement.remove(this._isDelete(changeElement));
-          }
-        }
-      }
-    }
   },
 
   _isInsert: function(element: any) {
