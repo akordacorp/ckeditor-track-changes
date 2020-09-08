@@ -1201,7 +1201,10 @@ LITEPlugin.prototype = {
                   return event ? this._tracker.handleEvent(event) : true;
                 }
                 return true;
-              }.bind(this)
+              }.bind(this),
+              null,
+              null,
+              9
             )
           );
         }
