@@ -2188,6 +2188,7 @@ class InlineChangeEditor {
       const insertAttributes = new CKEDITOR.dom.element(contentAddNode).getAttributes();
       ctNode.dataset.akordaRevertInfo = JSON.stringify(insertAttributes);
 
+      dom.insertAfter(contentNode, ctNode);
       parent.removeChild(contentNode);
       if (isParentTheInsert) {
         ctNode.appendChild(contentNode);
@@ -2198,12 +2199,6 @@ class InlineChangeEditor {
       }
       if (isParentTheInsert && cInd > 0 && cInd >= nChildren - 1) {
         dom.insertAfter(contentAddNode, ctNode);
-      } else {
-        if (cInd > 0 || !isParentTheInsert) {
-          var splitNode = this._splitNode(contentAddNode, parent, cInd);
-          this._deleteEmptyNode(splitNode);
-        }
-        contentAddNode.parentNode.insertBefore(ctNode, contentAddNode);
       }
       // find the comment marker and move it before assessing _deleteEmptyNode
       if (dom.hasNoTextOrStubContent(contentAddNode)) {
@@ -2221,7 +2216,7 @@ class InlineChangeEditor {
         this.selection.addRange(range);
       }
       if (options && options.merge) {
-        this._mergeDeleteNode(ctNode);
+        ctNode = this._mergeDeleteNode(ctNode);
         const toNormalize = new CKEDITOR.dom.element(ctNode);
         toNormalize
           .getChildren()
@@ -2263,15 +2258,16 @@ class InlineChangeEditor {
       content = dom.extractContent(delNode);
       delNode.parentNode.removeChild(delNode);
       siblingDel.appendChild(content);
-      this._mergeDeleteNode(siblingDel);
+      delNode = this._mergeDeleteNode(siblingDel);
     } else if (
       this._isCurrentUserIceNode((siblingDel = this._getIceNode(delNode.nextSibling, DELETE_TYPE)))
     ) {
       content = dom.extractContent(siblingDel);
       delNode.parentNode.removeChild(siblingDel);
       delNode.appendChild(content);
-      this._mergeDeleteNode(delNode);
+      delNode = this._mergeDeleteNode(delNode);
     }
+    return delNode;
   }
 
   /**
